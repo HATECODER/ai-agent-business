@@ -56,6 +56,10 @@ def seed_database(path: str | Path | None = None, *, reset: bool = False) -> boo
         (10, "Khaki 32", "Khaki", "32", 5, 4),
     ]
     with connect(path) as db:
+        # Streamlit can start multiple sessions at the same time. Acquire the
+        # SQLite write lock before checking whether the database is empty so
+        # two sessions cannot both attempt to insert the fixed demo IDs.
+        db.execute("BEGIN IMMEDIATE")
         if reset:
             for table in ("campaigns", "tasks", "expenses", "orders", "inventory", "products", "customers"):
                 db.execute(f"DELETE FROM {table}")
