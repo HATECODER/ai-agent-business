@@ -2,7 +2,7 @@
 
 **Version:** 0.1
 **Date:** 2026-10-08
-**Status:** Phase 0 proposal; update whenever identity, tenant scope, files, connectors, exports, external actions, finance, RAG, or deployment boundaries change.
+**Status:** Accepted for Phase 1 implementation on 2026-10-08; update whenever identity, tenant scope, files, connectors, exports, external actions, finance, RAG, or deployment boundaries change.
 
 ## 1. Scope
 

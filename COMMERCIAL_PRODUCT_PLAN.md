@@ -6,7 +6,7 @@
 
 The enforceable staged security baseline and every-push procedure are maintained in [SECURITY_REQUIREMENTS.md](SECURITY_REQUIREMENTS.md).
 
-Phase 0 is formalized in [Decision 0002](docs/decisions/0002-commercial-r1-foundation.md), the [R1 role-permission matrix](docs/R1_ROLE_PERMISSION_MATRIX.md), and the [R1 threat model](docs/security/R1_THREAT_MODEL.md). These are proposed checkpoint artifacts until the Product Owner accepts or amends them.
+Phase 0 was accepted by the Product Owner on 2026-10-08 and is formalized in [Decision 0002](docs/decisions/0002-commercial-r1-foundation.md), the [R1 role-permission matrix](docs/R1_ROLE_PERMISSION_MATRIX.md), and the [R1 threat model](docs/security/R1_THREAT_MODEL.md).
 
 ## 1. Product decision
 

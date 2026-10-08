@@ -121,6 +121,10 @@ Before each push, run the proportional BUILD security gate:
 
 It runs repository policy, secret, static, dependency, deterministic test, and short load checks without live AI calls. GitHub Actions repeats these checks and verifies the Linux container build. Staged and feature-specific requirements are documented in [SECURITY_REQUIREMENTS.md](SECURITY_REQUIREMENTS.md).
 
+## Commercial Backend Foundation
+
+The production-track FastAPI code is being built separately under [backend/](backend/README.md). The root Streamlit application remains the fictional evaluation demo. The first Phase 1 slice implements fixed merchant roles, membership-based active-tenant resolution, deny-by-default permissions, and adversarial tenant authorization tests. Its review record is [Decision 0003](docs/decisions/0003-phase1-authorization-foundation.md).
+
 Tests use temporary databases and make no OpenAI API calls. The launcher installs the tested dependency lock, gives each run a fresh temporary directory inside `.venv`, and disables pytest's cache. This avoids both an inaccessible Windows system temp directory and permission problems left by an earlier test run.
 
 Day 2 local evidence: **44 tests passed**. The offline evaluation runner also executed all **44** regression and holdout cases as a runner smoke test; it did not score live model quality.
