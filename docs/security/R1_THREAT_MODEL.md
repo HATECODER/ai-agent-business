@@ -134,6 +134,12 @@ Every arrow crossing a component is untrusted until authenticated/validated for 
 - threat-model-linked negative tests included with each implemented boundary;
 - existing BUILD push gate stays green.
 
+Phase 1B now implements the proposed PostgreSQL tenant keys, separate platform
+staff table, restricted runtime role, transaction-local authority context, and
+default-deny RLS policies. Offline migration checks and the real PostgreSQL
+two-tenant suite passed against a disposable local database. CI must repeat
+the PostgreSQL suite before the accepted checkpoint is published.
+
 ### Before any real CSV is accepted
 
 - upload feature requirements `SEC-INP-005` to `SEC-INP-007` pass;

@@ -236,6 +236,8 @@ class Membership:
     membership_id: str
     tenant_id: str
     identity_id: str
+    identity_issuer: str
+    identity_subject: str
     role: MerchantRole
     status: MembershipStatus
     permission_version: int
@@ -268,7 +270,8 @@ def resolve_tenant_authority(
     matches = [
         membership
         for membership in memberships
-        if membership.identity_id == identity.identity_id
+        if membership.identity_issuer == identity.issuer
+        and membership.identity_subject == identity.subject
         and membership.tenant_id == active_tenant_id
         and membership.status == MembershipStatus.ACTIVE
     ]
@@ -279,7 +282,7 @@ def resolve_tenant_authority(
     if membership.permission_version < 1:
         raise AuthorizationDenied("Access denied for this workspace.")
     return TenantAuthority(
-        identity_id=identity.identity_id,
+        identity_id=membership.identity_id,
         membership_id=membership.membership_id,
         tenant_id=membership.tenant_id,
         role=membership.role,

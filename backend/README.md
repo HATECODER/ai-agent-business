@@ -10,6 +10,10 @@ Current implemented boundary:
 - active tenant resolved from an exact active membership;
 - tenant and own-record authorization checks with sanitized denial messages;
 - two-tenant, revoked-membership, and role-denial tests.
+- Alembic-managed PostgreSQL tenant, identity, membership, location, platform-staff, and audit tables;
+- a restricted `bizpilot_runtime` role with tenant Row-Level Security;
+- transaction-local tenant/identity/membership/version database context;
+- real PostgreSQL isolation tests in CI.
 
 Run locally after installing the root locked requirements:
 
@@ -17,4 +21,17 @@ Run locally after installing the root locked requirements:
 .\.venv\Scripts\python.exe -m uvicorn backend.app.main:app --reload --port 8000
 ```
 
-This checkpoint does not yet validate OIDC tokens or connect to PostgreSQL.
+For a dedicated PostgreSQL database, provision the non-login roles first and
+then run the migration with a protected migration credential:
+
+```powershell
+psql "$env:BIZPILOT_DATABASE_URL" -f backend/sql/roles.sql
+.\.venv\Scripts\python.exe -m alembic -c backend/alembic.ini upgrade head
+```
+
+The normal API connection must use a login permitted to `SET ROLE
+bizpilot_runtime`; it must not own tables or have `BYPASSRLS`. Never put a
+database credential in `alembic.ini`, source control, logs, or browser code.
+
+This checkpoint does not yet validate managed OIDC tokens or expose protected
+business HTTP endpoints.

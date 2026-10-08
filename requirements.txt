@@ -1,5 +1,8 @@
 streamlit==1.64.0
 fastapi==0.142.4
+SQLAlchemy==2.0.54
+alembic==1.20.0
+psycopg[binary]==3.3.6
 openai-agents==0.22.3
 pydantic==2.13.5
 pytest==9.1.1

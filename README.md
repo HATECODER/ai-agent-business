@@ -123,7 +123,7 @@ It runs repository policy, secret, static, dependency, deterministic test, and s
 
 ## Commercial Backend Foundation
 
-The production-track FastAPI code is being built separately under [backend/](backend/README.md). The root Streamlit application remains the fictional evaluation demo. The first Phase 1 slice implements fixed merchant roles, membership-based active-tenant resolution, deny-by-default permissions, and adversarial tenant authorization tests. Its review record is [Decision 0003](docs/decisions/0003-phase1-authorization-foundation.md).
+The production-track FastAPI code is being built separately under [backend/](backend/README.md). The root Streamlit application remains the fictional evaluation demo. Phase 1 currently includes fixed merchant roles, membership-based active-tenant resolution, deny-by-default permissions, Alembic PostgreSQL migrations, a restricted runtime role, and tenant RLS tests. Review records are [Decision 0003](docs/decisions/0003-phase1-authorization-foundation.md) and the pending [Decision 0004](docs/decisions/0004-phase1-postgres-rls-foundation.md).
 
 Tests use temporary databases and make no OpenAI API calls. The launcher installs the tested dependency lock, gives each run a fresh temporary directory inside `.venv`, and disables pytest's cache. This avoids both an inaccessible Windows system temp directory and permission problems left by an earlier test run.
 

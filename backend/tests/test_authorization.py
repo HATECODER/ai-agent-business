@@ -20,13 +20,16 @@ from backend.app.authorization import (
 
 
 IDENTITY = ExternalIdentity("https://identity.example", "user-1")
+IDENTITY_RECORD_ID = "00000000-0000-0000-0000-000000000001"
 
 
 def membership(tenant_id: str, role: MerchantRole, *, status=MembershipStatus.ACTIVE):
     return Membership(
         membership_id=f"membership-{tenant_id}",
         tenant_id=tenant_id,
-        identity_id=IDENTITY.identity_id,
+        identity_id=IDENTITY_RECORD_ID,
+        identity_issuer=IDENTITY.issuer,
+        identity_subject=IDENTITY.subject,
         role=role,
         status=status,
         permission_version=1,
@@ -94,7 +97,7 @@ def test_growth_own_task_scope_rejects_another_users_task():
         authority,
         Permission.TASKS_MANAGE,
         resource_tenant_id="tenant-a",
-        resource_owner_identity_id=IDENTITY.identity_id,
+        resource_owner_identity_id=IDENTITY_RECORD_ID,
     ) == GrantScope.OWN
     with pytest.raises(AuthorizationDenied, match="Resource not found"):
         require_permission(
