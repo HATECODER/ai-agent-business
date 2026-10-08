@@ -6,6 +6,8 @@
 
 The enforceable staged security baseline and every-push procedure are maintained in [SECURITY_REQUIREMENTS.md](SECURITY_REQUIREMENTS.md).
 
+Phase 0 is formalized in [Decision 0002](docs/decisions/0002-commercial-r1-foundation.md), the [R1 role-permission matrix](docs/R1_ROLE_PERMISSION_MATRIX.md), and the [R1 threat model](docs/security/R1_THREAT_MODEL.md). These are proposed checkpoint artifacts until the Product Owner accepts or amends them.
+
 ## 1. Product decision
 
 BizPilot should become a multi-tenant commerce operations product for small Bangladeshi businesses. The first commercial release should make routine inventory, task, customer follow-up, and operating-summary work easier while keeping every business in control of its data and actions.
@@ -541,8 +543,8 @@ A successful pilot proves a useful, supportable, and isolated workflow for a sma
 
 The Product Owner should approve these in order:
 
-1. First merchant vertical and real source: for example Shopify fashion merchants, WooCommerce merchants, or CSV-first retailers.
-2. R1 roles and whether Finance Viewer is included in the first pilot.
+1. **Provisionally decided:** CSV-first inventory retailers are the initial data contract; the merchant's existing system remains source of truth. Shopify is only the reference connector candidate until merchant discovery satisfies Decision 0002's selection gate.
+2. **Provisionally decided:** R1 uses fixed Owner, Admin, Operations, Growth, Finance Viewer, and Viewer roles under the linked permission matrix.
 3. Managed identity and hosting vendors after region, backup, MFA, organization, and cost review.
 4. Source-of-truth rules for product, inventory, order, and customer fields.
 5. Production model provider/data-processing terms and which tenant fields may be sent.

@@ -158,3 +158,5 @@ The model receives only narrow tool functions. Task priority, category, entity r
 ## Production Roadmap
 
 After demo validation: move to PostgreSQL; add authentication and tenant isolation; integrate one messaging channel and real order/payment sources; add durable background jobs; expand Bangla/Banglish evaluations and observability; then deploy. These are future steps, outside this prototype.
+
+Commercial R1 planning is captured in [COMMERCIAL_PRODUCT_PLAN.md](COMMERCIAL_PRODUCT_PLAN.md). Canonical terminology and the first source decision are in [Decision 0002](docs/decisions/0002-commercial-r1-foundation.md), with the [role-permission matrix](docs/R1_ROLE_PERMISSION_MATRIX.md), [threat model](docs/security/R1_THREAT_MODEL.md), and [staged security requirements](SECURITY_REQUIREMENTS.md).

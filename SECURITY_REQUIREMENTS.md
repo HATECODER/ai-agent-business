@@ -4,6 +4,8 @@
 **Initial version:** 2026-10-08
 **Applies to:** source code, configuration, infrastructure, AI tools, data connectors, releases, and support operations
 
+The current commercial threat analysis is [docs/security/R1_THREAT_MODEL.md](docs/security/R1_THREAT_MODEL.md), and the role contract is [docs/R1_ROLE_PERMISSION_MATRIX.md](docs/R1_ROLE_PERMISSION_MATRIX.md).
+
 ## 1. Purpose
 
 This document is the security contract for BizPilot development. It is designed to reduce likely attacks and data leaks without turning early product development into a compliance exercise.
