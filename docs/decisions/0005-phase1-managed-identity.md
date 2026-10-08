@@ -4,7 +4,7 @@ Date: 2026-10-08
 
 ## Status
 
-Implemented; pending Product Owner checkpoint review.
+Accepted by the Product Owner on 2026-10-08.
 
 ## Implemented boundary
 
