@@ -4,6 +4,8 @@ Original architecture research: **2026-09-29**. Code, requirements and market re
 
 **Immediate delivery decision:** a 2–3 day sprint can harden the existing owner-facing prototype into a restricted, synthetic-data evaluation pilot. It cannot complete the 18-capability production platform. Section 0 defines that release, its market rationale and requirements. [THREE_DAY_TODO.md](THREE_DAY_TODO.md) contains the executable work checklist and test gates. Sections 1–23 retain the full production path; their multi-tenant architecture and estimates apply to R1 and later, not the three-day release.
 
+The focused merchant UX, platform-admin separation, role model, data-update workflows, tenant security baseline, and commercial R1 acceptance criteria are defined in [COMMERCIAL_PRODUCT_PLAN.md](COMMERCIAL_PRODUCT_PLAN.md). That document is the implementation bridge from this architecture plan to the next production phase.
+
 This document turns the original 18-capability vision into a staged product for Bangladeshi SMEs. It uses the current repository, `PRODUCT_BRIEF.md`, and primary vendor/security documentation. Technical decisions, capacity targets, timelines, and budget allowances are our engineering proposals. They are distinguished from documented provider facts and have to be validated during the pilot.
 
 Navigation:

@@ -113,6 +113,14 @@ The database file is ignored by Git. `BIZPILOT_DB_PATH` can point to a different
 .\run.ps1 -CheckOnly
 ```
 
+Before each push, run the proportional BUILD security gate:
+
+```powershell
+.\scripts\security_gate.ps1
+```
+
+It runs repository policy, secret, static, dependency, deterministic test, and short load checks without live AI calls. GitHub Actions repeats these checks and verifies the Linux container build. Staged and feature-specific requirements are documented in [SECURITY_REQUIREMENTS.md](SECURITY_REQUIREMENTS.md).
+
 Tests use temporary databases and make no OpenAI API calls. The launcher installs the tested dependency lock, gives each run a fresh temporary directory inside `.venv`, and disables pytest's cache. This avoids both an inaccessible Windows system temp directory and permission problems left by an earlier test run.
 
 Day 2 local evidence: **44 tests passed**. The offline evaluation runner also executed all **44** regression and holdout cases as a runner smoke test; it did not score live model quality.
