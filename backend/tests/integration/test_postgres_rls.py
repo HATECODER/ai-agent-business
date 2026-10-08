@@ -14,6 +14,11 @@ from backend.app.authorization import AuthorizationDenied, MerchantRole, TenantA
 from backend.app.database import tenant_transaction
 from backend.app.identity import VerifiedIdentity
 from backend.app.inventory import database_inventory_reader
+from backend.app.inventory_import import (
+    ImportRejected,
+    database_error_reporter,
+    database_import_previewer,
+)
 from backend.app.memberships import persistent_authority_resolver
 
 
@@ -52,6 +57,16 @@ def authority_a(permission_version=1):
         tenant_id=str(TENANT_A),
         role=MerchantRole.OWNER,
         permission_version=permission_version,
+    )
+
+
+def authority_b():
+    return TenantAuthority(
+        identity_id=str(IDENTITY_B),
+        membership_id=str(MEMBERSHIP_B),
+        tenant_id=str(TENANT_B),
+        role=MerchantRole.OWNER,
+        permission_version=1,
     )
 
 
@@ -366,6 +381,88 @@ def test_inventory_composite_keys_reject_cross_tenant_relationships(
                 "wrong_variant": VARIANT_A_2,
                 "location_a": LOCATION_A,
             })
+
+
+def test_import_preview_is_scanned_classified_and_tenant_isolated(migrated_database):
+    scan_calls = []
+
+    def scanner(content):
+        scan_calls.append(content)
+
+    content = (
+        "product_name,variant_name,sku,location_code,location_name,quantity,"
+        "low_stock_threshold,variant_options,base_price_bdt,expected_record_version\n"
+        'Tenant A Shirt,Medium,A-SHIRT-M,DHAKA-A,Tenant A Warehouse,3,5,{},1250.00,1\n'
+        "New Product,Default,NEW-SKU,DHAKA-A,Tenant A Warehouse,8,2,{},500.00,\n"
+        "Bad Product,Default,BAD-SKU,DHAKA-A,Tenant A Warehouse,-1,2,{},500.00,\n"
+    ).encode()
+    preview = database_import_previewer(migrated_database, scanner)(
+        authority_a(), "merchant.csv", "text/csv", content
+    )
+
+    assert scan_calls == [content]
+    assert preview.status == "needs_correction"
+    assert preview.apply_enabled is False
+    assert preview.counts.model_dump() == {
+        "total": 3,
+        "valid": 2,
+        "errors": 1,
+        "new": 1,
+        "changes": 0,
+        "conflicts": 0,
+        "unchanged": 1,
+    }
+    report = database_error_reporter(migrated_database)(authority_a(), preview.preview_id)
+    assert report.startswith(b"row_number,column,error_code,message\n")
+    assert b"-1" not in report
+
+    with pytest.raises(ImportRejected):
+        database_error_reporter(migrated_database)(authority_b(), preview.preview_id)
+
+    with tenant_transaction(migrated_database, authority_a()) as connection:
+        stored = connection.execute(
+            text("SELECT status, content_sha256 FROM inventory_import_previews WHERE id = :id"),
+            {"id": preview.preview_id},
+        ).one()
+        assert stored.status == "needs_correction"
+        assert len(stored.content_sha256) == 64
+        error_count = connection.execute(
+            text("SELECT COUNT(*) FROM inventory_import_errors")
+        ).scalar_one()
+        assert error_count == 1
+        assert connection.execute(text("SELECT COUNT(*) FROM products")).scalar_one() == 1
+        balance_count = connection.execute(
+            text("SELECT COUNT(*) FROM inventory_balances")
+        ).scalar_one()
+        assert balance_count == 2
+
+
+def test_runtime_cannot_mutate_preview_metadata_or_forge_tenant(migrated_database):
+    with pytest.raises(DBAPIError):
+        with tenant_transaction(migrated_database, authority_a()) as connection:
+            connection.execute(text("DELETE FROM inventory_import_previews"))
+
+    with pytest.raises(DBAPIError):
+        with tenant_transaction(migrated_database, authority_a()) as connection:
+            connection.execute(
+                text("""
+                    INSERT INTO inventory_import_previews
+                        (id, tenant_id, membership_id, original_filename,
+                         content_sha256, byte_size, status, total_rows, valid_rows,
+                         error_rows, new_rows, change_rows, conflict_rows,
+                         unchanged_rows, expires_at)
+                    VALUES
+                        (:id, :tenant_b, :membership_b, 'forged.csv', :digest,
+                         1, 'ready', 0, 0, 0, 0, 0, 0, 0,
+                         CURRENT_TIMESTAMP + INTERVAL '1 hour')
+                """),
+                {
+                    "id": UUID("30000000-0000-0000-0000-000000000099"),
+                    "tenant_b": TENANT_B,
+                    "membership_b": MEMBERSHIP_B,
+                    "digest": "0" * 64,
+                },
+            )
 
 
 def test_revocation_and_permission_version_take_effect(migrated_database):

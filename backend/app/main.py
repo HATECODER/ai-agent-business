@@ -2,7 +2,7 @@
 
 from uuid import UUID, uuid4
 
-from fastapi import Depends, FastAPI, Query, Request, Response
+from fastapi import Depends, FastAPI, File, Query, Request, Response, UploadFile
 from pydantic import BaseModel
 
 from backend.app.api_auth import AuthServices, deny_request, require_tenant_authority
@@ -19,6 +19,14 @@ from backend.app.inventory import (
     InventoryUnavailable,
     database_inventory_reader,
 )
+from backend.app.inventory_import import (
+    MAX_FILE_BYTES,
+    ImportErrorReporter,
+    ImportPreviewUnavailable,
+    ImportRejected,
+    InventoryImportPreview,
+    InventoryImportPreviewer,
+)
 
 
 class WorkspaceSession(BaseModel):
@@ -30,6 +38,8 @@ class WorkspaceSession(BaseModel):
 def create_app(
     auth_services: AuthServices | None = None,
     inventory_reader: InventoryReader | None = None,
+    import_previewer: InventoryImportPreviewer | None = None,
+    import_error_reporter: ImportErrorReporter | None = None,
 ) -> FastAPI:
     app = FastAPI(
         title="BizPilot API",
@@ -40,6 +50,8 @@ def create_app(
     )
     app.state.auth_services = auth_services
     app.state.inventory_reader = inventory_reader
+    app.state.import_previewer = import_previewer
+    app.state.import_error_reporter = import_error_reporter
 
     @app.middleware("http")
     async def correlation_id(request: Request, call_next):
@@ -74,19 +86,105 @@ def create_app(
         try:
             require_permission(authority, Permission.INVENTORY_READ)
         except AuthorizationDenied:
-            deny_request(request, "inventory_permission_denied", 403, "Permission denied.")
+            deny_request(
+                request, "inventory_permission_denied", 403, "Permission denied."
+            )
 
         reader = request.app.state.inventory_reader
         if reader is None:
             try:
                 reader = database_inventory_reader(create_database_engine())
             except RuntimeError:
-                deny_request(request, "inventory_configuration", 503, "Inventory unavailable.")
+                deny_request(
+                    request, "inventory_configuration", 503, "Inventory unavailable."
+                )
             request.app.state.inventory_reader = reader
         try:
             return reader(authority, limit, after, low_stock_only)
         except InventoryUnavailable:
-            deny_request(request, "inventory_unavailable", 503, "Inventory unavailable.")
+            deny_request(
+                request, "inventory_unavailable", 503, "Inventory unavailable."
+            )
+
+    @app.post(
+        "/api/v1/inventory/imports/preview",
+        response_model=InventoryImportPreview,
+    )
+    async def preview_inventory_import(
+        request: Request,
+        file: UploadFile = File(...),
+        authority: TenantAuthority = Depends(require_tenant_authority),
+    ) -> InventoryImportPreview:
+        try:
+            require_permission(authority, Permission.INVENTORY_IMPORT)
+        except AuthorizationDenied:
+            deny_request(
+                request, "inventory_import_permission_denied", 403, "Permission denied."
+            )
+        previewer = request.app.state.import_previewer
+        if previewer is None:
+            deny_request(
+                request,
+                "inventory_import_configuration",
+                503,
+                "Import preview unavailable.",
+            )
+        try:
+            content = await file.read(MAX_FILE_BYTES + 1)
+        finally:
+            await file.close()
+        try:
+            return previewer(
+                authority, file.filename or "", file.content_type or "", content
+            )
+        except ImportRejected as error:
+            deny_request(request, error.code, 422, error.message)
+        except ImportPreviewUnavailable:
+            deny_request(
+                request,
+                "inventory_import_unavailable",
+                503,
+                "Import preview unavailable.",
+            )
+
+    @app.get("/api/v1/inventory/imports/{preview_id}/errors.csv")
+    def inventory_import_error_report(
+        request: Request,
+        preview_id: UUID,
+        authority: TenantAuthority = Depends(require_tenant_authority),
+    ) -> Response:
+        try:
+            require_permission(authority, Permission.INVENTORY_IMPORT)
+        except AuthorizationDenied:
+            deny_request(
+                request, "inventory_import_permission_denied", 403, "Permission denied."
+            )
+        reporter = request.app.state.import_error_reporter
+        if reporter is None:
+            deny_request(
+                request,
+                "inventory_import_configuration",
+                503,
+                "Import preview unavailable.",
+            )
+        try:
+            body = reporter(authority, preview_id)
+        except ImportRejected as error:
+            deny_request(request, error.code, 404, error.message)
+        except ImportPreviewUnavailable:
+            deny_request(
+                request,
+                "inventory_import_unavailable",
+                503,
+                "Import preview unavailable.",
+            )
+        return Response(
+            content=body,
+            media_type="text/csv; charset=utf-8",
+            headers={
+                "Content-Disposition": 'attachment; filename="inventory-import-errors.csv"'
+            },
+        )
 
     return app
 

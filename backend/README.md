@@ -25,8 +25,13 @@ Current implemented boundary:
   composite tenant keys and forced RLS;
 - a permission-protected, bounded `GET /api/v1/inventory` endpoint with
   low-stock filtering, UUID cursor pagination, and source/freshness evidence;
-- read-only runtime privileges for inventory and locations. CSV upload,
-  inventory adjustment, and import apply remain disabled.
+- read-only runtime privileges for inventory and locations. Inventory adjustment
+  and import apply remain disabled;
+- a preview-only inventory CSV API with strict UTF-8/schema/size/row validation,
+  deterministic new/change/conflict/unchanged counts, tenant-scoped expiring
+  metadata, and formula-safe error CSVs;
+- a mandatory injected malware-scanner boundary. Without a reviewed scanner,
+  preview fails closed with `503`; raw CSV bytes are never persisted.
 
 Run locally after installing the root locked requirements:
 
@@ -67,3 +72,9 @@ Platform Admin access, or merchant invitations. See
 Phase 1D adds the first read-only inventory API. It does not accept merchant
 files or expose inventory writes. See
 [Decision 0006](../docs/decisions/0006-phase1-inventory-read-foundation.md).
+
+Phase 1E adds the staged validation and preview contract. The default app keeps
+it unavailable until a reviewed malware scanner is injected, and no import
+apply endpoint exists. See
+[Decision 0007](../docs/decisions/0007-phase1-inventory-import-preview.md) and
+the [CSV template](../docs/templates/inventory-import-template.csv).

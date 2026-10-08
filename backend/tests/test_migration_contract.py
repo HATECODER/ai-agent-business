@@ -28,6 +28,8 @@ def test_initial_migration_renders_required_rls_contract(monkeypatch, capsys):
         "product_variants",
         "inventory_balances",
         "inventory_movements",
+        "inventory_import_previews",
+        "inventory_import_errors",
     ):
         assert f"CREATE TABLE {table}" in sql
     assert "CREATE ROLE" not in sql
@@ -37,14 +39,21 @@ def test_initial_migration_renders_required_rls_contract(monkeypatch, capsys):
     assert "CREATE POLICY audit_events_runtime_insert" in sql
     assert "SECURITY DEFINER" in sql
     assert "NOBYPASSRLS" not in sql
-    assert "GRANT SELECT, INSERT, UPDATE, DELETE ON locations TO bizpilot_runtime" in sql
+    assert (
+        "GRANT SELECT, INSERT, UPDATE, DELETE ON locations TO bizpilot_runtime" in sql
+    )
     assert 'ALTER TABLE "locations" FORCE ROW LEVEL SECURITY' in sql
     assert 'ALTER TABLE "audit_events" FORCE ROW LEVEL SECURITY' in sql
     assert "ADD COLUMN status VARCHAR(20) DEFAULT 'active' NOT NULL" in sql
     assert "ADD COLUMN tokens_valid_after TIMESTAMP WITH TIME ZONE" in sql
     assert "CREATE OR REPLACE FUNCTION bizpilot_resolve_membership" in sql
     assert "TO bizpilot_authenticator" in sql
-    for table in ("products", "product_variants", "inventory_balances", "inventory_movements"):
+    for table in (
+        "products",
+        "product_variants",
+        "inventory_balances",
+        "inventory_movements",
+    ):
         assert f'ALTER TABLE "{table}" FORCE ROW LEVEL SECURITY' in sql
         assert f"CREATE POLICY {table}_runtime_select" in sql
     assert (
@@ -53,6 +62,14 @@ def test_initial_migration_renders_required_rls_contract(monkeypatch, capsys):
     ) in sql
     assert "GRANT INSERT ON inventory_balances" not in sql
     assert "REVOKE INSERT, UPDATE, DELETE ON locations FROM bizpilot_runtime" in sql
+    for table in ("inventory_import_previews", "inventory_import_errors"):
+        assert f'ALTER TABLE "{table}" FORCE ROW LEVEL SECURITY' in sql
+        assert f"CREATE POLICY {table}_runtime_select" in sql
+        assert f"CREATE POLICY {table}_runtime_insert" in sql
+    assert (
+        "GRANT SELECT, INSERT ON inventory_import_previews, "
+        "inventory_import_errors TO bizpilot_runtime"
+    ) in sql
 
 
 def test_role_bootstrap_is_restricted_and_contains_no_credentials():

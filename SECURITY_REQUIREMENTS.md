@@ -267,7 +267,8 @@ Record commit/artifact digest, enabled features/stage, gate results, identity/te
 
 - commercial multi-tenant memberships/roles and PostgreSQL RLS;
 - production Platform Admin/support console;
-- upload/import quarantine and malware scanning;
+- production malware-scanner deployment, proxy upload limits, retained-file
+  quarantine, expired-preview purge, and inventory import apply;
 - connector/webhook ingestion and reconciliation;
 - private object storage and tenant-scoped exports;
 - production MFA/session/re-authentication flows;
