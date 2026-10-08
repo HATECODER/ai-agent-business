@@ -85,6 +85,8 @@ def execute_proposal(proposal_id: str, actor: ActorContext,
             raise ValueError("Proposal was not found for this owner.")
         if row["status"] == "succeeded":
             return json.loads(row["result_json"])
+        if row["status"] == "executing":
+            raise ValueError("This action is already executing or requires manual reconciliation.")
         if row["status"] != "pending":
             raise ValueError(f"Proposal cannot execute from status '{row['status']}'.")
         if row["expires_at"] <= now.isoformat(timespec="seconds"):

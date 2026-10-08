@@ -58,13 +58,12 @@ def main() -> int:
     histories = [["session-one-marker"], ["session-two-marker"]]
     lock = Lock()
     barrier = Barrier(2)
-    stop_at = perf_counter() + args.duration_seconds
-
     proposal = propose_action("run_restock_review", {}, actors[0], database)
     with ThreadPoolExecutor(max_workers=2) as executor:
         confirmations = list(executor.map(
             lambda _: _confirm_safely(proposal["id"], actors[0], database), range(2)
         ))
+    stop_at = perf_counter() + args.duration_seconds
 
     def session(index: int) -> None:
         actor = actors[index]

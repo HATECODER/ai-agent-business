@@ -71,6 +71,19 @@ def test_rejected_proposal_cannot_execute(seeded_db):
         execute_proposal(proposal["id"], actor, seeded_db)
 
 
+def test_executing_proposal_returns_retryable_concurrency_error(seeded_db):
+    actor = demo_actor()
+    proposal = propose_action("run_restock_review", {}, actor, seeded_db)
+    with connect(seeded_db) as db:
+        db.execute(
+            "UPDATE action_proposals SET status = 'executing' WHERE id = ?",
+            (proposal["id"],),
+        )
+
+    with pytest.raises(ValueError, match="already executing"):
+        execute_proposal(proposal["id"], actor, seeded_db)
+
+
 def test_parallel_restock_confirmation_has_one_logical_effect(seeded_db):
     actor = demo_actor()
     proposal = propose_action("run_restock_review", {}, actor, seeded_db)
