@@ -1,5 +1,6 @@
 import os
 from pathlib import Path
+from datetime import datetime, timedelta, timezone
 from uuid import UUID
 
 from alembic import command
@@ -9,8 +10,10 @@ import pytest
 from sqlalchemy import create_engine, text
 from sqlalchemy.exc import DBAPIError
 
-from backend.app.authorization import MerchantRole, TenantAuthority
+from backend.app.authorization import AuthorizationDenied, MerchantRole, TenantAuthority
 from backend.app.database import tenant_transaction
+from backend.app.identity import VerifiedIdentity
+from backend.app.memberships import persistent_authority_resolver
 
 
 BACKEND_ROOT = Path(__file__).resolve().parents[2]
@@ -103,6 +106,11 @@ def reset_tenant_a_membership(migrated_database):
             SET status = 'active', permission_version = 1
             WHERE id = :id
         """), {"id": MEMBERSHIP_A})
+        connection.execute(text("""
+            UPDATE identities
+            SET status = 'active', tokens_valid_after = NULL
+            WHERE id = :id
+        """), {"id": IDENTITY_A})
 
 
 def test_runtime_sees_only_active_tenant_rows(migrated_database):
@@ -113,10 +121,12 @@ def test_runtime_sees_only_active_tenant_rows(migrated_database):
 
 def test_runtime_role_is_restricted_and_does_not_own_tables(migrated_database):
     with migrated_database.connect() as connection:
-        role = connection.execute(text("""
-            SELECT rolsuper, rolcreatedb, rolcreaterole, rolbypassrls
-            FROM pg_roles WHERE rolname = 'bizpilot_runtime'
-        """)).mappings().one()
+        roles = connection.execute(text("""
+            SELECT rolname, rolsuper, rolcreatedb, rolcreaterole, rolbypassrls
+            FROM pg_roles
+            WHERE rolname IN ('bizpilot_runtime', 'bizpilot_authenticator')
+            ORDER BY rolname
+        """)).mappings().all()
         table_owner = connection.execute(text("""
             SELECT tableowner FROM pg_tables
             WHERE schemaname = 'public' AND tablename = 'locations'
@@ -125,14 +135,38 @@ def test_runtime_role_is_restricted_and_does_not_own_tables(migrated_database):
             SELECT relname FROM pg_class
             WHERE relname IN ('locations', 'audit_events') AND relforcerowsecurity
         """)).scalars())
-    assert dict(role) == {
-        "rolsuper": False,
-        "rolcreatedb": False,
-        "rolcreaterole": False,
-        "rolbypassrls": False,
-    }
+        auth_can_select_identity = connection.execute(text(
+            "SELECT has_table_privilege('bizpilot_authenticator', 'identities', 'SELECT')"
+        )).scalar_one()
+        auth_can_resolve = connection.execute(text("""
+            SELECT has_function_privilege(
+                'bizpilot_authenticator',
+                'bizpilot_resolve_membership(text,text,uuid,timestamptz)',
+                'EXECUTE'
+            )
+        """)).scalar_one()
+        runtime_can_resolve = connection.execute(text("""
+            SELECT has_function_privilege(
+                'bizpilot_runtime',
+                'bizpilot_resolve_membership(text,text,uuid,timestamptz)',
+                'EXECUTE'
+            )
+        """)).scalar_one()
+    assert [dict(role) for role in roles] == [
+        {
+            "rolname": role_name,
+            "rolsuper": False,
+            "rolcreatedb": False,
+            "rolcreaterole": False,
+            "rolbypassrls": False,
+        }
+        for role_name in ("bizpilot_authenticator", "bizpilot_runtime")
+    ]
     assert table_owner != "bizpilot_runtime"
     assert forced_tables == {"locations", "audit_events"}
+    assert auth_can_select_identity is False
+    assert auth_can_resolve is True
+    assert runtime_can_resolve is False
 
 
 def test_runtime_cannot_read_or_insert_cross_tenant_rows(migrated_database):
@@ -174,3 +208,51 @@ def test_revocation_and_permission_version_take_effect(migrated_database):
         )
     with tenant_transaction(migrated_database, authority_a(permission_version=2)) as connection:
         assert connection.execute(text("SELECT id FROM locations")).all() == []
+
+
+def test_persistent_auth_lookup_rechecks_tenant_membership_and_session_cutoff(
+    migrated_database,
+):
+    issued_at = datetime.now(timezone.utc).replace(microsecond=0)
+    identity = VerifiedIdentity(
+        "https://identity.example",
+        "user-a",
+        issued_at,
+        issued_at + timedelta(minutes=10),
+    )
+    resolve = persistent_authority_resolver(migrated_database)
+    authority = resolve(identity, str(TENANT_A))
+    assert authority == authority_a()
+
+    with pytest.raises(AuthorizationDenied):
+        resolve(identity, str(TENANT_B))
+
+    with migrated_database.begin() as connection:
+        connection.execute(text("""
+            UPDATE identities
+            SET tokens_valid_after = :cutoff
+            WHERE id = :id
+        """), {"cutoff": issued_at + timedelta(seconds=1), "id": IDENTITY_A})
+    with pytest.raises(AuthorizationDenied):
+        resolve(identity, str(TENANT_A))
+
+    with migrated_database.begin() as connection:
+        connection.execute(text("""
+            UPDATE identities
+            SET status = 'revoked', tokens_valid_after = NULL
+            WHERE id = :identity_id
+        """), {"identity_id": IDENTITY_A})
+    with pytest.raises(AuthorizationDenied):
+        resolve(identity, str(TENANT_A))
+
+    with migrated_database.begin() as connection:
+        connection.execute(text("""
+            UPDATE identities SET status = 'active' WHERE id = :identity_id
+        """), {"identity_id": IDENTITY_A})
+        connection.execute(text("""
+            UPDATE memberships
+            SET status = 'revoked'
+            WHERE id = :membership_id
+        """), {"membership_id": MEMBERSHIP_A})
+    with pytest.raises(AuthorizationDenied):
+        resolve(identity, str(TENANT_A))

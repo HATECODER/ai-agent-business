@@ -141,6 +141,15 @@ two-tenant suite passed against a disposable local database. GitHub Actions run
 `37764800681` repeated the PostgreSQL suite and passed the Windows security/test
 job and Linux Docker build before the checkpoint was closed.
 
+Phase 1C adds fixed-algorithm managed OIDC verification, a restricted
+authenticator database role, server-side identity and membership resolution,
+and per-request revocation checks. The browser's active-tenant header is only a
+selector. A valid token plus an exact active database membership is required.
+Identity suspension, membership revocation, or `tokens_valid_after` invalidates
+access on the next protected request. Denial telemetry contains a category and
+server correlation ID without tokens, subjects, tenant IDs, or provider/database
+payloads.
+
 ### Before any real CSV is accepted
 
 - upload feature requirements `SEC-INP-005` to `SEC-INP-007` pass;

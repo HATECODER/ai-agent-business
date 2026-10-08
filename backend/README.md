@@ -14,6 +14,13 @@ Current implemented boundary:
 - a restricted `bizpilot_runtime` role with tenant Row-Level Security;
 - transaction-local tenant/identity/membership/version database context;
 - real PostgreSQL isolation tests in CI.
+- managed OIDC bearer validation with fixed `RS256`, exact issuer/audience,
+  expiry, issued-at, subject, token-age, and JWKS checks;
+- a separate restricted PostgreSQL authenticator role and persistent
+  identity/membership lookup on every protected request;
+- identity suspension/revocation and `tokens_valid_after` session invalidation;
+- a protected `GET /api/v1/workspace` authority endpoint with sanitized denial
+  responses, categories, and server-generated correlation IDs.
 
 Run locally after installing the root locked requirements:
 
@@ -33,5 +40,20 @@ The normal API connection must use a login permitted to `SET ROLE
 bizpilot_runtime`; it must not own tables or have `BYPASSRLS`. Never put a
 database credential in `alembic.ini`, source control, logs, or browser code.
 
-This checkpoint does not yet validate managed OIDC tokens or expose protected
-business HTTP endpoints.
+Configure the protected merchant API with secret-manager values:
+
+```text
+BIZPILOT_AUTH_DATABASE_URL=postgresql+psycopg://<auth-login>:<secret>@<host>/<db>
+BIZPILOT_OIDC_ISSUER=https://<managed-idp-issuer>/
+BIZPILOT_OIDC_AUDIENCE=<commercial-api-audience>
+BIZPILOT_OIDC_JWKS_URL=https://<managed-idp-host>/.well-known/jwks.json
+```
+
+The auth login may assume only `bizpilot_authenticator`; the normal API login
+may assume only `bizpilot_runtime`. The `X-BizPilot-Tenant` request header is a
+workspace selector and never an authorization credential. No production IdP or
+database credential is stored in this repository.
+
+Phase 1C does not implement browser login/cookies, Platform Admin access,
+merchant invitations, or inventory/import APIs. See
+[Decision 0005](../docs/decisions/0005-phase1-managed-identity.md).

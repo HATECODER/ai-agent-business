@@ -29,6 +29,10 @@ def test_initial_migration_renders_required_rls_contract(monkeypatch, capsys):
     assert "GRANT SELECT, INSERT, UPDATE, DELETE ON locations TO bizpilot_runtime" in sql
     assert 'ALTER TABLE "locations" FORCE ROW LEVEL SECURITY' in sql
     assert 'ALTER TABLE "audit_events" FORCE ROW LEVEL SECURITY' in sql
+    assert "ADD COLUMN status VARCHAR(20) DEFAULT 'active' NOT NULL" in sql
+    assert "ADD COLUMN tokens_valid_after TIMESTAMP WITH TIME ZONE" in sql
+    assert "CREATE OR REPLACE FUNCTION bizpilot_resolve_membership" in sql
+    assert "TO bizpilot_authenticator" in sql
 
 
 def test_role_bootstrap_is_restricted_and_contains_no_credentials():
@@ -37,5 +41,6 @@ def test_role_bootstrap_is_restricted_and_contains_no_credentials():
     assert "NOSUPERUSER" in sql
     assert "NOCREATEROLE" in sql
     assert "NOLOGIN" in sql
+    assert "bizpilot_authenticator" in sql
     executable_sql = re.sub(r"--.*$", "", sql, flags=re.MULTILINE)
     assert "PASSWORD" not in executable_sql.upper()
