@@ -38,7 +38,7 @@ def auth_services_from_env() -> AuthServices:
     return AuthServices(verifier, resolver)
 
 
-def _deny(request: Request, category: str, status_code: int, detail: str) -> None:
+def deny_request(request: Request, category: str, status_code: int, detail: str) -> None:
     correlation_id = getattr(request.state, "correlation_id", "unavailable")
     LOGGER.warning(
         "access_denied category=%s correlation_id=%s",
@@ -56,7 +56,7 @@ def _services(request: Request) -> AuthServices:
     try:
         services = auth_services_from_env()
     except (IdentityConfigurationError, RuntimeError):
-        _deny(request, "auth_configuration", 503, "Authentication service unavailable.")
+        deny_request(request, "auth_configuration", 503, "Authentication service unavailable.")
     request.app.state.auth_services = services
     return services
 
@@ -66,21 +66,21 @@ def require_tenant_authority(
     credentials: HTTPAuthorizationCredentials | None = Security(BEARER),
 ) -> TenantAuthority:
     if credentials is None or credentials.scheme.lower() != "bearer":
-        _deny(request, "missing_bearer", 401, "Authentication required.")
+        deny_request(request, "missing_bearer", 401, "Authentication required.")
     active_tenant_id = request.headers.get("X-BizPilot-Tenant", "").strip()
     if not active_tenant_id:
-        _deny(request, "missing_workspace", 400, "Select a workspace.")
+        deny_request(request, "missing_workspace", 400, "Select a workspace.")
 
     services = _services(request)
     try:
         identity = services.verifier.verify(credentials.credentials)
     except AuthenticationDenied:
-        _deny(request, "invalid_token", 401, "Invalid authentication token.")
+        deny_request(request, "invalid_token", 401, "Invalid authentication token.")
     except IdentityProviderUnavailable:
-        _deny(request, "identity_provider_unavailable", 503, "Authentication service unavailable.")
+        deny_request(request, "identity_provider_unavailable", 503, "Authentication service unavailable.")
     try:
         return services.resolve_authority(identity, active_tenant_id)
     except AuthorizationDenied:
-        _deny(request, "membership_denied", 403, "Access denied for this workspace.")
+        deny_request(request, "membership_denied", 403, "Access denied for this workspace.")
     except MembershipLookupUnavailable:
-        _deny(request, "membership_unavailable", 503, "Authentication service unavailable.")
+        deny_request(request, "membership_unavailable", 503, "Authentication service unavailable.")

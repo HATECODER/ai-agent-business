@@ -17,7 +17,18 @@ def test_initial_migration_renders_required_rls_contract(monkeypatch, capsys):
     command.upgrade(config, "head", sql=True)
     sql = capsys.readouterr().out
 
-    for table in ("tenants", "identities", "memberships", "platform_staff", "locations", "audit_events"):
+    for table in (
+        "tenants",
+        "identities",
+        "memberships",
+        "platform_staff",
+        "locations",
+        "audit_events",
+        "products",
+        "product_variants",
+        "inventory_balances",
+        "inventory_movements",
+    ):
         assert f"CREATE TABLE {table}" in sql
     assert "CREATE ROLE" not in sql
     assert "ENABLE ROW LEVEL SECURITY" in sql
@@ -33,6 +44,15 @@ def test_initial_migration_renders_required_rls_contract(monkeypatch, capsys):
     assert "ADD COLUMN tokens_valid_after TIMESTAMP WITH TIME ZONE" in sql
     assert "CREATE OR REPLACE FUNCTION bizpilot_resolve_membership" in sql
     assert "TO bizpilot_authenticator" in sql
+    for table in ("products", "product_variants", "inventory_balances", "inventory_movements"):
+        assert f'ALTER TABLE "{table}" FORCE ROW LEVEL SECURITY' in sql
+        assert f"CREATE POLICY {table}_runtime_select" in sql
+    assert (
+        "GRANT SELECT ON products, product_variants, inventory_balances, "
+        "inventory_movements TO bizpilot_runtime"
+    ) in sql
+    assert "GRANT INSERT ON inventory_balances" not in sql
+    assert "REVOKE INSERT, UPDATE, DELETE ON locations FROM bizpilot_runtime" in sql
 
 
 def test_role_bootstrap_is_restricted_and_contains_no_credentials():

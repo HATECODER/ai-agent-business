@@ -13,6 +13,7 @@ from sqlalchemy.exc import DBAPIError
 from backend.app.authorization import AuthorizationDenied, MerchantRole, TenantAuthority
 from backend.app.database import tenant_transaction
 from backend.app.identity import VerifiedIdentity
+from backend.app.inventory import database_inventory_reader
 from backend.app.memberships import persistent_authority_resolver
 
 
@@ -28,6 +29,14 @@ MEMBERSHIP_A = UUID("10000000-0000-0000-0000-000000000003")
 MEMBERSHIP_B = UUID("20000000-0000-0000-0000-000000000003")
 LOCATION_A = UUID("10000000-0000-0000-0000-000000000004")
 LOCATION_B = UUID("20000000-0000-0000-0000-000000000004")
+PRODUCT_A = UUID("10000000-0000-0000-0000-000000000005")
+PRODUCT_B = UUID("20000000-0000-0000-0000-000000000005")
+VARIANT_A = UUID("10000000-0000-0000-0000-000000000006")
+VARIANT_B = UUID("20000000-0000-0000-0000-000000000006")
+BALANCE_A = UUID("10000000-0000-0000-0000-000000000007")
+BALANCE_B = UUID("20000000-0000-0000-0000-000000000007")
+VARIANT_A_2 = UUID("10000000-0000-0000-0000-000000000008")
+BALANCE_A_2 = UUID("10000000-0000-0000-0000-000000000009")
 
 
 pytestmark = pytest.mark.skipif(
@@ -90,6 +99,61 @@ def migrated_database():
             "tenant_a": TENANT_A,
             "location_b": LOCATION_B,
             "tenant_b": TENANT_B,
+        })
+        connection.execute(text("""
+            INSERT INTO products
+                (id, tenant_id, name, source_kind, source_reference, source_version, observed_at)
+            VALUES
+                (:product_a, :tenant_a, 'Tenant A Shirt', 'csv_snapshot', 'import-a', 'v1', CURRENT_TIMESTAMP),
+                (:product_b, :tenant_b, 'Tenant B Shoe', 'csv_snapshot', 'import-b', 'v1', CURRENT_TIMESTAMP)
+        """), {
+            "product_a": PRODUCT_A,
+            "tenant_a": TENANT_A,
+            "product_b": PRODUCT_B,
+            "tenant_b": TENANT_B,
+        })
+        connection.execute(text("""
+            INSERT INTO product_variants
+                (id, tenant_id, product_id, sku, name, base_price_minor, currency,
+                 source_kind, source_reference, source_version, observed_at)
+            VALUES
+                (:variant_a, :tenant_a, :product_a, 'A-SHIRT-M', 'Medium', 125000, 'BDT',
+                 'csv_snapshot', 'import-a', 'v1', CURRENT_TIMESTAMP),
+                (:variant_a_2, :tenant_a, :product_a, 'A-SHIRT-L', 'Large', 125000, 'BDT',
+                 'csv_snapshot', 'import-a', 'v1', CURRENT_TIMESTAMP),
+                (:variant_b, :tenant_b, :product_b, 'B-SHOE-42', 'Size 42', 320000, 'BDT',
+                 'csv_snapshot', 'import-b', 'v1', CURRENT_TIMESTAMP)
+        """), {
+            "variant_a": VARIANT_A,
+            "variant_a_2": VARIANT_A_2,
+            "tenant_a": TENANT_A,
+            "product_a": PRODUCT_A,
+            "variant_b": VARIANT_B,
+            "tenant_b": TENANT_B,
+            "product_b": PRODUCT_B,
+        })
+        connection.execute(text("""
+            INSERT INTO inventory_balances
+                (id, tenant_id, variant_id, location_id, quantity, low_stock_threshold,
+                 source_kind, source_reference, source_version, observed_at)
+            VALUES
+                (:balance_a, :tenant_a, :variant_a, :location_a, 3, 5,
+                 'csv_snapshot', 'import-a', 'v1', CURRENT_TIMESTAMP),
+                (:balance_a_2, :tenant_a, :variant_a_2, :location_a, 10, 2,
+                 'csv_snapshot', 'import-a', 'v1', CURRENT_TIMESTAMP),
+                (:balance_b, :tenant_b, :variant_b, :location_b, 20, 4,
+                 'csv_snapshot', 'import-b', 'v1', CURRENT_TIMESTAMP)
+        """), {
+            "balance_a": BALANCE_A,
+            "balance_a_2": BALANCE_A_2,
+            "tenant_a": TENANT_A,
+            "variant_a": VARIANT_A,
+            "variant_a_2": VARIANT_A_2,
+            "location_a": LOCATION_A,
+            "balance_b": BALANCE_B,
+            "tenant_b": TENANT_B,
+            "variant_b": VARIANT_B,
+            "location_b": LOCATION_B,
         })
     try:
         yield engine
@@ -188,6 +252,120 @@ def test_runtime_cannot_read_platform_staff(migrated_database):
     with pytest.raises(DBAPIError):
         with tenant_transaction(migrated_database, authority_a()) as connection:
             connection.execute(text("SELECT identity_id FROM platform_staff")).all()
+
+
+def test_inventory_reader_returns_only_current_tenant_with_source_evidence(
+    migrated_database,
+):
+    page = database_inventory_reader(migrated_database)(authority_a(), 50, None, False)
+    assert len(page.items) == 2
+    item = page.items[0]
+    assert item.inventory_id == BALANCE_A
+    assert item.product_name == "Tenant A Shirt"
+    assert item.sku == "A-SHIRT-M"
+    assert item.quantity == 3
+    assert item.low_stock_threshold == 5
+    assert item.is_low_stock is True
+    assert item.base_price_minor == 125000
+    assert item.currency == "BDT"
+    assert item.source_kind == "csv_snapshot"
+    assert item.source_version == "v1"
+    assert page.next_cursor is None
+
+    first_page = database_inventory_reader(migrated_database)(authority_a(), 1, None, False)
+    assert [entry.inventory_id for entry in first_page.items] == [BALANCE_A]
+    assert first_page.next_cursor == BALANCE_A
+    second_page = database_inventory_reader(migrated_database)(
+        authority_a(), 1, first_page.next_cursor, False
+    )
+    assert [entry.inventory_id for entry in second_page.items] == [BALANCE_A_2]
+    assert second_page.next_cursor is None
+
+    low_stock = database_inventory_reader(migrated_database)(authority_a(), 1, None, True)
+    assert [entry.inventory_id for entry in low_stock.items] == [BALANCE_A]
+
+
+def test_runtime_inventory_is_read_only_and_cross_tenant_rows_are_hidden(
+    migrated_database,
+):
+    with tenant_transaction(migrated_database, authority_a()) as connection:
+        assert connection.execute(
+            text("SELECT id FROM products WHERE id = :id"), {"id": PRODUCT_B}
+        ).first() is None
+        counts = {
+            table: connection.execute(text(f"SELECT COUNT(*) FROM {table}")).scalar_one()
+            for table in (
+                "products",
+                "product_variants",
+                "inventory_balances",
+                "inventory_movements",
+            )
+        }
+    assert counts == {
+        "products": 1,
+        "product_variants": 2,
+        "inventory_balances": 2,
+        "inventory_movements": 0,
+    }
+
+    with pytest.raises(DBAPIError):
+        with tenant_transaction(migrated_database, authority_a()) as connection:
+            connection.execute(text("""
+                INSERT INTO products
+                    (id, tenant_id, name, source_kind, observed_at)
+                VALUES
+                    (:id, :tenant_id, 'Unauthorized write', 'manual', CURRENT_TIMESTAMP)
+            """), {
+                "id": UUID("30000000-0000-0000-0000-000000000005"),
+                "tenant_id": TENANT_A,
+            })
+
+    with pytest.raises(DBAPIError):
+        with tenant_transaction(migrated_database, authority_a()) as connection:
+            connection.execute(text("""
+                INSERT INTO locations (id, tenant_id, code, name)
+                VALUES (:id, :tenant_id, 'NO-WRITE', 'Unauthorized location')
+            """), {
+                "id": UUID("30000000-0000-0000-0000-000000000006"),
+                "tenant_id": TENANT_A,
+            })
+
+
+def test_inventory_composite_keys_reject_cross_tenant_relationships(
+    migrated_database,
+):
+    with pytest.raises(DBAPIError):
+        with migrated_database.begin() as connection:
+            connection.execute(text("""
+                INSERT INTO product_variants
+                    (id, tenant_id, product_id, sku, name, source_kind,
+                     source_reference, observed_at)
+                VALUES
+                    (:id, :tenant_b, :product_a, 'FORGED-SKU', 'Forged',
+                     'csv_snapshot', 'forged-import', CURRENT_TIMESTAMP)
+            """), {
+                "id": UUID("30000000-0000-0000-0000-000000000007"),
+                "tenant_b": TENANT_B,
+                "product_a": PRODUCT_A,
+            })
+
+    with pytest.raises(DBAPIError):
+        with migrated_database.begin() as connection:
+            connection.execute(text("""
+                INSERT INTO inventory_movements
+                    (id, tenant_id, balance_id, variant_id, location_id,
+                     actor_type, quantity_before, quantity_delta, quantity_after,
+                     reason, source_kind, idempotency_key)
+                VALUES
+                    (:id, :tenant_a, :balance_a, :wrong_variant, :location_a,
+                     'system', 3, 1, 4, 'Forged relationship', 'manual', 'forged-movement')
+            """), {
+                "id": UUID("30000000-0000-0000-0000-000000000008"),
+                "tenant_a": TENANT_A,
+                "balance_a": BALANCE_A,
+                "wrong_variant": VARIANT_A_2,
+                "location_a": LOCATION_A,
+            })
 
 
 def test_revocation_and_permission_version_take_effect(migrated_database):

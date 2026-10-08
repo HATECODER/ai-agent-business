@@ -21,6 +21,12 @@ Current implemented boundary:
 - identity suspension/revocation and `tokens_valid_after` session invalidation;
 - a protected `GET /api/v1/workspace` authority endpoint with sanitized denial
   responses, categories, and server-generated correlation IDs.
+- tenant-isolated product, variant, inventory balance, and movement schemas with
+  composite tenant keys and forced RLS;
+- a permission-protected, bounded `GET /api/v1/inventory` endpoint with
+  low-stock filtering, UUID cursor pagination, and source/freshness evidence;
+- read-only runtime privileges for inventory and locations. CSV upload,
+  inventory adjustment, and import apply remain disabled.
 
 Run locally after installing the root locked requirements:
 
@@ -54,6 +60,10 @@ may assume only `bizpilot_runtime`. The `X-BizPilot-Tenant` request header is a
 workspace selector and never an authorization credential. No production IdP or
 database credential is stored in this repository.
 
-Phase 1C does not implement browser login/cookies, Platform Admin access,
-merchant invitations, or inventory/import APIs. See
+The Phase 1C identity boundary does not implement browser login/cookies,
+Platform Admin access, or merchant invitations. See
 [Decision 0005](../docs/decisions/0005-phase1-managed-identity.md).
+
+Phase 1D adds the first read-only inventory API. It does not accept merchant
+files or expose inventory writes. See
+[Decision 0006](../docs/decisions/0006-phase1-inventory-read-foundation.md).

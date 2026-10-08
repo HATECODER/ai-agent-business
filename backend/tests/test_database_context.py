@@ -1,7 +1,7 @@
 import pytest
 
 from backend.app.authorization import MerchantRole, TenantAuthority
-from backend.app.database import database_url, tenant_transaction
+from backend.app.database import create_database_engine, database_url, tenant_transaction
 
 
 def test_database_url_is_required_and_postgresql_only(monkeypatch):
@@ -11,6 +11,16 @@ def test_database_url_is_required_and_postgresql_only(monkeypatch):
     monkeypatch.setenv("BIZPILOT_DATABASE_URL", "sqlite:///unsafe.db")
     with pytest.raises(RuntimeError, match="requires PostgreSQL"):
         database_url()
+
+
+def test_database_engine_hides_parameters_and_sanitizes_invalid_configuration():
+    engine = create_database_engine("postgresql+psycopg://user:secret@localhost/database")
+    try:
+        assert engine.hide_parameters is True
+    finally:
+        engine.dispose()
+    with pytest.raises(RuntimeError, match="configuration is invalid"):
+        create_database_engine("postgresql+unknown://invalid")
 
 
 def test_tenant_context_is_transaction_local_and_parameterized():

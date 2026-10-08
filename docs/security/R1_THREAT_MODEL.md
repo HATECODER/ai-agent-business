@@ -150,6 +150,13 @@ access on the next protected request. Denial telemetry contains a category and
 server correlation ID without tokens, subjects, tenant IDs, or provider/database
 payloads.
 
+Phase 1D adds tenant-owned products, variants, balances, and movement-ledger
+foundations with composite tenant foreign keys and forced RLS. The API runtime
+has read-only inventory/location privileges. The inventory endpoint requires
+both current Phase 1C authority and `inventory.read`, bounds pagination, and
+returns source observation/version metadata. CSV upload, staging, apply, and
+all inventory writes remain disabled until their feature gates pass.
+
 ### Before any real CSV is accepted
 
 - upload feature requirements `SEC-INP-005` to `SEC-INP-007` pass;

@@ -6,6 +6,7 @@ import os
 from uuid import UUID
 
 from sqlalchemy import Connection, Engine, create_engine, text
+from sqlalchemy.exc import SQLAlchemyError
 
 from backend.app.authorization import TenantAuthority
 
@@ -20,7 +21,15 @@ def database_url() -> str:
 
 
 def create_database_engine(url: str | None = None) -> Engine:
-    return create_engine(url or database_url(), pool_pre_ping=True, future=True)
+    try:
+        return create_engine(
+            url or database_url(),
+            pool_pre_ping=True,
+            hide_parameters=True,
+            future=True,
+        )
+    except (SQLAlchemyError, ValueError) as error:
+        raise RuntimeError("Database configuration is invalid.") from error
 
 
 @contextmanager
