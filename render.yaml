@@ -1,0 +1,48 @@
+# Render Blueprint for the restricted synthetic owner pilot.
+# Secret values are entered in Render and never stored in this file.
+services:
+  - type: web
+    name: bizpilot-owner-pilot
+    runtime: docker
+    region: singapore
+    plan: 0.5c-512mb
+    numInstances: 1
+    autoDeployTrigger: checksPass
+    healthCheckPath: /_stcore/health
+    maxShutdownDelaySeconds: 30
+    initialDeployHook: python -m database.seed
+    disk:
+      name: bizpilot-data
+      mountPath: /var/data
+      sizeGB: 1
+    envVars:
+      - key: BIZPILOT_DEPLOYMENT_MODE
+        value: pilot
+      - key: BIZPILOT_DATA_MODE
+        value: synthetic
+      - key: BIZPILOT_DATA_SOURCE_LABEL
+        value: Fictional BizPilot evaluation dataset
+      - key: BIZPILOT_DATASET_VERSION
+        value: fictional-v1
+      - key: BIZPILOT_AI_MODE
+        value: gemini
+      - key: GEMINI_MODEL
+        value: gemini-3.1-flash-lite
+      - key: BIZPILOT_DAILY_BUDGET_USD
+        value: "2.00"
+      - key: BIZPILOT_DB_PATH
+        value: /var/data/bizpilot.sqlite3
+      - key: BIZPILOT_SESSION_HOURS
+        value: "8"
+      - key: BIZPILOT_OWNER_SUBJECTS
+        sync: false
+      - key: BIZPILOT_PUBLIC_URL
+        sync: false
+      - key: GEMINI_API_KEY
+        sync: false
+      - key: OIDC_CLIENT_ID
+        sync: false
+      - key: OIDC_CLIENT_SECRET
+        sync: false
+      - key: OIDC_COOKIE_SECRET
+        generateValue: true

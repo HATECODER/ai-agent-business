@@ -29,10 +29,12 @@ def get_sales_summary(start_date: str | None = None, end_date: str | None = None
             AND order_date BETWEEN ? AND ?""", (start, end)).fetchone()
     count, gross, received = row["order_count"], row["gross_sales"], row["amount_received"]
     return {"start_date": start, "end_date": end, "order_count": count,
-            "gross_sales": gross, "amount_received": received,
-            "pending_receivable": gross - received,
+            "gross_sales": gross, "order_cohort_receipts": received,
+            "order_cohort_receivable": gross - received,
             "average_order_value": round(gross / count, 2) if count else 0,
-            "currency": "BDT", "sales_statuses": list(SALES_STATUSES)}
+            "currency": "BDT", "sales_statuses": list(SALES_STATUSES),
+            "metric_note": ("Receipts and receivables are for orders dated in this range. "
+                            "Payment-event dates and the full outstanding balance are not modeled.")}
 
 
 def get_expense_summary(start_date: str | None = None, end_date: str | None = None,
@@ -51,9 +53,16 @@ def get_financial_summary(start_date: str | None = None, end_date: str | None = 
     sales = get_sales_summary(start_date, end_date, db_path)
     expenses = get_expense_summary(start_date, end_date, db_path)
     return {"start_date": sales["start_date"], "end_date": sales["end_date"],
-            "revenue": sales["gross_sales"], "amount_received": sales["amount_received"],
-            "expenses": expenses["expenses"],
-            "net_cash_flow": sales["amount_received"] - expenses["expenses"],
-            "receivable": sales["pending_receivable"], "order_count": sales["order_count"],
+            "revenue": sales["gross_sales"],
+            "order_cohort_receipts": sales["order_cohort_receipts"],
+            "dated_expenses": expenses["expenses"],
+            "order_cohort_receipts_less_dated_expenses": (
+                sales["order_cohort_receipts"] - expenses["expenses"]),
+            "order_cohort_receivable": sales["order_cohort_receivable"],
+            "order_count": sales["order_count"],
             "average_order_value": sales["average_order_value"], "currency": "BDT",
-            "sales_statuses": list(SALES_STATUSES)}
+            "sales_statuses": list(SALES_STATUSES),
+            "cash_flow_available": False,
+            "metric_note": ("This is an order-cohort operating view, not cash flow. Payment dates, "
+                            "opening balance, refunds, settlement fees, and a full receivables ledger "
+                            "are not modeled.")}

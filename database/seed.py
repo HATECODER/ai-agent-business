@@ -61,8 +61,20 @@ def seed_database(path: str | Path | None = None, *, reset: bool = False) -> boo
         # two sessions cannot both attempt to insert the fixed demo IDs.
         db.execute("BEGIN IMMEDIATE")
         if reset:
-            for table in ("campaigns", "tasks", "expenses", "orders", "inventory", "products", "customers"):
-                db.execute(f"DELETE FROM {table}")
+            for statement in (
+                "DELETE FROM action_executions",
+                "DELETE FROM action_proposals",
+                "DELETE FROM audit_events",
+                "DELETE FROM ai_usage",
+                "DELETE FROM campaigns",
+                "DELETE FROM tasks",
+                "DELETE FROM expenses",
+                "DELETE FROM orders",
+                "DELETE FROM inventory",
+                "DELETE FROM products",
+                "DELETE FROM customers",
+            ):
+                db.execute(statement)
         elif db.execute("SELECT 1 FROM customers LIMIT 1").fetchone():
             return False
 

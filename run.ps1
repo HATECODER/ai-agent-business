@@ -15,7 +15,7 @@ try {
     }
 
     Write-Host 'Installing project dependencies...'
-    & $venvPython -m pip install --quiet -r requirements.txt
+    & $venvPython -m pip install --quiet -r requirements.lock.txt
     if ($LASTEXITCODE -ne 0) { throw 'Dependency installation failed.' }
 
     if (-not (Test-Path -LiteralPath '.env')) {

@@ -17,12 +17,36 @@ def test_inventory_filters(seeded_db):
     assert get_inventory("No Such Product", db_path=seeded_db) == []
 
 
+@pytest.mark.parametrize(
+    ("product", "size", "color", "expected_product", "expected_color", "expected_size"),
+    [
+        ("পোলো", "এক্সএল", "কালো", "Premium Cotton Polo", "Black", "XL"),
+        ("polo shirt", "extra large", "kalo", "Premium Cotton Polo", "Black", "XL"),
+        ("Denim Jeans", "৩২", "নীল", "Denim Jeans", "Blue", "32"),
+        ("Lightweight Hoodie", "লার্জ", "ধূসর", "Lightweight Hoodie", "Grey", "L"),
+    ],
+)
+def test_inventory_filters_normalize_bangla_and_banglish(
+    seeded_db, product, size, color, expected_product, expected_color, expected_size
+):
+    items = get_inventory(product, size, color, seeded_db)
+    assert len(items) == 1
+    assert items[0]["product"] == expected_product
+    assert items[0]["color"] == expected_color
+    assert items[0]["size"] == expected_size
+
+
 def test_task_creation_and_priority_validation(seeded_db):
     task = create_task("Call supplier", "Ask about stock", "high", "operations", db_path=seeded_db)
     assert task["created"] is True
     assert any(item["id"] == task["id"] for item in get_pending_tasks(db_path=seeded_db))
     with pytest.raises(ValidationError):
         create_task("Bad priority", "", "urgent", "operations", db_path=seeded_db)
+    with pytest.raises(ValidationError):
+        create_task("   ", "Whitespace is not a title", db_path=seeded_db)
+    with pytest.raises(ValueError, match="does not exist"):
+        create_task("Review missing stock", "", "high", "restock", "inventory", 999999,
+                    db_path=seeded_db)
 
 
 def test_restock_task_deduplicates(seeded_db):

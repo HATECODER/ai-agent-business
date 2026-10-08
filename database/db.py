@@ -72,13 +72,46 @@ def initialize_database(path: str | Path | None = None) -> None:
         );
         CREATE TABLE IF NOT EXISTS campaigns (
             id INTEGER PRIMARY KEY, name TEXT NOT NULL, campaign_type TEXT NOT NULL,
-            target_description TEXT NOT NULL, offer TEXT, channel TEXT NOT NULL,
+            target_description TEXT NOT NULL, objective TEXT, offer TEXT, channel TEXT NOT NULL,
             status TEXT NOT NULL, created_at TEXT NOT NULL
         );
+        CREATE TABLE IF NOT EXISTS action_proposals (
+            id TEXT PRIMARY KEY, actor_id TEXT NOT NULL, action_type TEXT NOT NULL,
+            payload_json TEXT NOT NULL, payload_hash TEXT NOT NULL,
+            idempotency_key TEXT NOT NULL UNIQUE, status TEXT NOT NULL,
+            created_at TEXT NOT NULL, expires_at TEXT NOT NULL,
+            decided_at TEXT, result_json TEXT
+        );
+        CREATE TABLE IF NOT EXISTS action_executions (
+            idempotency_key TEXT PRIMARY KEY, proposal_id TEXT NOT NULL UNIQUE,
+            payload_hash TEXT NOT NULL, status TEXT NOT NULL,
+            started_at TEXT NOT NULL, completed_at TEXT, result_json TEXT,
+            FOREIGN KEY(proposal_id) REFERENCES action_proposals(id)
+        );
+        CREATE TABLE IF NOT EXISTS audit_events (
+            id INTEGER PRIMARY KEY, actor_id TEXT NOT NULL, event_type TEXT NOT NULL,
+            target_type TEXT NOT NULL, target_id TEXT NOT NULL,
+            outcome TEXT NOT NULL, created_at TEXT NOT NULL
+        );
+        CREATE TABLE IF NOT EXISTS ai_usage (
+            run_id TEXT PRIMARY KEY, actor_id TEXT NOT NULL, provider TEXT NOT NULL,
+            model TEXT NOT NULL, usage_date TEXT NOT NULL,
+            reserved_usd_micros INTEGER NOT NULL CHECK(reserved_usd_micros >= 0),
+            actual_usd_micros INTEGER,
+            status TEXT NOT NULL, input_tokens INTEGER, output_tokens INTEGER,
+            model_calls INTEGER, tool_calls INTEGER,
+            created_at TEXT NOT NULL, updated_at TEXT NOT NULL,
+            expires_at TEXT NOT NULL
+        );
+        CREATE INDEX IF NOT EXISTS ai_usage_daily_actor
+          ON ai_usage(usage_date, actor_id, status);
         CREATE UNIQUE INDEX IF NOT EXISTS one_open_restock_task
           ON tasks(category, related_entity_type, related_entity_id)
           WHERE category = 'restock' AND status IN ('pending', 'in_progress');
         """)
+        campaign_columns = {row[1] for row in db.execute("PRAGMA table_info(campaigns)")}
+        if "objective" not in campaign_columns:
+            db.execute("ALTER TABLE campaigns ADD COLUMN objective TEXT")
 
 
 def ensure_demo_data(path: str | Path | None = None) -> None:
@@ -88,3 +121,36 @@ def ensure_demo_data(path: str | Path | None = None) -> None:
     if not exists:
         from database.seed import seed_database
         seed_database(path)
+
+
+def prepare_database(path: str | Path | None = None) -> None:
+    """Prepare demo storage or validate a pre-provisioned pilot database.
+
+    Pilot startup deliberately does not create a database or seed records.
+    """
+    from config import data_mode, deployment_mode
+
+    data_mode()  # Validate the configured combination before touching disk.
+    if deployment_mode() == "demo":
+        ensure_demo_data(path)
+        return
+
+    db_file = database_path(path)
+    if not db_file.is_file():
+        raise RuntimeError(
+            "Pilot database is missing. Provision and seed the synthetic dataset explicitly before startup."
+        )
+    connection = sqlite3.connect(f"file:{db_file.as_posix()}?mode=ro", uri=True)
+    try:
+        tables = {row[0] for row in connection.execute(
+            "SELECT name FROM sqlite_master WHERE type = 'table'"
+        )}
+    finally:
+        connection.close()
+    required = {
+        "customers", "products", "inventory", "orders", "expenses", "tasks", "campaigns",
+        "action_proposals", "action_executions", "audit_events", "ai_usage",
+    }
+    missing = sorted(required - tables)
+    if missing:
+        raise RuntimeError(f"Pilot database schema is incomplete: {', '.join(missing)}")

@@ -31,9 +31,10 @@ def create_campaign_brief(segment_description: str, objective: str,
     offer_text = campaign.offer or "See the latest collection"
     with connect(db_path) as db:
         cursor = db.execute("""INSERT INTO campaigns
-            (name, campaign_type, target_description, offer, channel, status, created_at)
-            VALUES (?, 're_engagement', ?, ?, ?, 'draft', ?)""",
-            (name, campaign.segment_description, campaign.offer, campaign.channel,
+            (name, campaign_type, target_description, objective, offer, channel, status, created_at)
+            VALUES (?, 're_engagement', ?, ?, ?, ?, 'draft', ?)""",
+            (name, campaign.segment_description, campaign.objective,
+             campaign.offer, campaign.channel,
              today().isoformat(timespec="seconds")))
     return {
         "campaign_id": cursor.lastrowid,

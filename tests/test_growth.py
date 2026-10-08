@@ -1,5 +1,6 @@
 from database.db import connect
 from database.seed import today
+from services.business_summary import get_business_summary
 from tools.growth import create_campaign_brief, get_inactive_customers
 
 
@@ -18,5 +19,16 @@ def test_campaign_is_only_a_draft(seeded_db):
     assert brief["status"] == "draft_not_sent"
     assert brief["message_bn_or_banglish"]
     with connect(seeded_db) as db:
-        status = db.execute("SELECT status FROM campaigns WHERE id = ?", (brief["campaign_id"],)).fetchone()[0]
+        row = db.execute("SELECT status, objective FROM campaigns WHERE id = ?",
+                         (brief["campaign_id"],)).fetchone()
+        status = row["status"]
     assert status == "draft"
+    assert row["objective"] == "Win back buyers"
+
+
+def test_owner_summary_uses_counts_without_customer_personal_fields(seeded_db):
+    summary = get_business_summary(seeded_db)
+    assert summary["inactive_customer_count"] == len(get_inactive_customers(30, seeded_db))
+    assert "inactive_customers" not in summary
+    assert summary["low_stock"]["total_count"] >= 1
+    assert "evidence" in summary
