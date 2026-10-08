@@ -137,8 +137,9 @@ Every arrow crossing a component is untrusted until authenticated/validated for 
 Phase 1B now implements the proposed PostgreSQL tenant keys, separate platform
 staff table, restricted runtime role, transaction-local authority context, and
 default-deny RLS policies. Offline migration checks and the real PostgreSQL
-two-tenant suite passed against a disposable local database. CI must repeat
-the PostgreSQL suite before the accepted checkpoint is published.
+two-tenant suite passed against a disposable local database. GitHub Actions run
+`37764800681` repeated the PostgreSQL suite and passed the Windows security/test
+job and Linux Docker build before the checkpoint was closed.
 
 ### Before any real CSV is accepted
 

@@ -55,6 +55,13 @@ tests passed, including migration rollback. The full security gate completed
 with 97 tests passed, zero load-check errors, and no known dependency
 vulnerability. The container was removed after the test.
 
+GitHub Actions run
+[`37764800681`](https://github.com/HATECODER/ai-agent-business/actions/runs/37764800681)
+then passed the Windows test and security job, the PostgreSQL RLS integration
+job, and the dependent Linux Docker build. A concurrent-confirmation race found
+by the first hosted run was reproduced locally and fixed in commit `457e884`;
+the exact hosted load check and 20 repeated local runs then passed.
+
 ## Deferred
 
 - managed OIDC JWT validation and identity synchronization;
