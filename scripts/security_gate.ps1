@@ -32,7 +32,7 @@ try {
         @{ Name = 'Frontend dependency audit'; Args = @('--prefix', $frontendRoot, 'audit', '--audit-level=high') },
         @{ Name = 'Frontend tests'; Args = @('--prefix', $frontendRoot, 'test') },
         @{ Name = 'Frontend typecheck'; Args = @('--prefix', $frontendRoot, 'run', 'typecheck') },
-        @{ Name = 'Frontend production build'; Args = @('--prefix', $frontendRoot, 'run', 'build') },
+        @{ Name = 'Frontend production browser security'; Args = @('--prefix', $frontendRoot, 'run', 'browser:security') },
         @{ Name = 'Frontend build verification'; Args = @('--prefix', $frontendRoot, 'run', 'verify:build') }
     )
     foreach ($step in $frontendSteps) {

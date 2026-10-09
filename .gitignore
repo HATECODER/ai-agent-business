@@ -12,3 +12,6 @@ docs/releases/*.json
 node_modules/
 .next/
 *.tsbuildinfo
+**/playwright/.auth/
+**/test-results/
+**/playwright-report/

@@ -8,6 +8,10 @@
     "build": "next build",
     "start": "next start",
     "test": "node --test --experimental-strip-types lib/*.test.ts",
+    "staging:preflight": "node scripts/check-staging-config.mjs",
+    "browser:security": "npm run build && playwright test e2e/unauthenticated-security.spec.ts",
+    "browser:authenticated": "playwright test e2e/authenticated-security.spec.ts",
+    "browser:auth:capture": "node e2e/capture-auth-state.mjs",
     "typecheck": "tsc --noEmit",
     "verify:build": "node scripts/verify-build.mjs"
   },
@@ -18,6 +22,7 @@
     "react-dom": "19.3.0"
   },
   "devDependencies": {
+    "@playwright/test": "1.64.0",
     "@types/node": "26.6.4",
     "@types/react": "19.3.0",
     "@types/react-dom": "19.3.0",
