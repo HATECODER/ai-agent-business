@@ -11,7 +11,6 @@ services:
     buildCommand: python -m pip install --requirement requirements.lock.txt
     startCommand: python -m uvicorn backend.app.main:app --host 0.0.0.0 --port $PORT
     healthCheckPath: /health/live
-    maxShutdownDelaySeconds: 30
     envVars:
       - key: PYTHON_VERSION
         value: 3.13.2
@@ -41,7 +40,6 @@ services:
     buildCommand: npm ci --ignore-scripts && npm run build
     startCommand: npm run start -- --hostname 0.0.0.0 --port $PORT
     healthCheckPath: /
-    maxShutdownDelaySeconds: 30
     envVars:
       - key: NODE_VERSION
         value: 22.14.0
