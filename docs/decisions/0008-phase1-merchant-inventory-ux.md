@@ -4,7 +4,7 @@ Date: 2026-10-09
 
 ## Status
 
-Ready for Product Owner review.
+Accepted by the Product Owner on 2026-10-09.
 
 ## Implemented boundary
 
