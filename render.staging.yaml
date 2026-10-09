@@ -1,0 +1,65 @@
+# Phase 1H HTTPS staging services. Secret and tenant-specific values are
+# entered in Render during Blueprint creation and never committed here.
+services:
+  - type: web
+    name: bizpilot-hatecoder-staging-api
+    runtime: python
+    region: singapore
+    plan: free
+    branch: main
+    autoDeployTrigger: checksPass
+    buildCommand: python -m pip install --requirement requirements.lock.txt
+    startCommand: python -m uvicorn backend.app.main:app --host 0.0.0.0 --port $PORT
+    healthCheckPath: /health/live
+    maxShutdownDelaySeconds: 30
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.13.2
+      - key: BIZPILOT_DATABASE_URL
+        sync: false
+      - key: BIZPILOT_AUTH_DATABASE_URL
+        sync: false
+      - key: BIZPILOT_OIDC_ISSUER
+        sync: false
+      - key: BIZPILOT_OIDC_AUDIENCE
+        sync: false
+      - key: BIZPILOT_OIDC_JWKS_URL
+        sync: false
+      - key: BIZPILOT_OIDC_MAX_TOKEN_AGE_SECONDS
+        value: "3600"
+      - key: BIZPILOT_OIDC_CLOCK_SKEW_SECONDS
+        value: "30"
+
+  - type: web
+    name: bizpilot-hatecoder-staging-web
+    runtime: node
+    region: singapore
+    plan: free
+    branch: main
+    rootDir: apps/web
+    autoDeployTrigger: checksPass
+    buildCommand: npm ci --ignore-scripts && npm run build
+    startCommand: npm run start -- --hostname 0.0.0.0 --port $PORT
+    healthCheckPath: /
+    maxShutdownDelaySeconds: 30
+    envVars:
+      - key: NODE_VERSION
+        value: 22.14.0
+      - key: APP_BASE_URL
+        sync: false
+      - key: BIZPILOT_API_BASE_URL
+        sync: false
+      - key: BIZPILOT_WORKSPACE_ID
+        sync: false
+      - key: BIZPILOT_WORKSPACE_NAME
+        sync: false
+      - key: AUTH0_DOMAIN
+        sync: false
+      - key: AUTH0_CLIENT_ID
+        sync: false
+      - key: AUTH0_CLIENT_SECRET
+        sync: false
+      - key: AUTH0_SECRET
+        sync: false
+      - key: AUTH0_AUDIENCE
+        sync: false
