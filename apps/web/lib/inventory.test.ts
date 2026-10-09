@@ -7,14 +7,11 @@ import {
   hasPermission,
   inventoryStatus,
   inventorySummary,
+  merchantInventoryItem,
   type InventoryItem,
 } from "./inventory.ts";
 
 const base: InventoryItem = {
-  inventory_id: "internal-inventory",
-  product_id: "internal-product",
-  variant_id: "internal-variant",
-  location_id: "internal-location",
   product_name: "Classic Oxford Shirt",
   variant_name: "Blue L",
   sku: "OXFORD-BLUE-L",
@@ -22,12 +19,6 @@ const base: InventoryItem = {
   location_name: "Dhaka Warehouse",
   quantity: 11,
   low_stock_threshold: 5,
-  is_low_stock: false,
-  base_price_minor: 185000,
-  currency: "BDT",
-  record_version: 1,
-  source_kind: "csv_snapshot",
-  source_version: "v1",
   observed_at: "2026-10-09T00:00:00+06:00",
 };
 
@@ -53,6 +44,18 @@ test("UI capability discovery never grants an absent permission", () => {
   const permissions = ["inventory.read"];
   assert.equal(hasPermission(permissions, "inventory.read"), true);
   assert.equal(hasPermission(permissions, "inventory.import"), false);
+});
+
+test("merchant client data excludes backend identifiers and write metadata", () => {
+  const backendItem = {
+    ...base,
+    inventory_id: "internal-inventory",
+    product_id: "internal-product",
+    record_version: 7,
+  };
+  assert.deepEqual(merchantInventoryItem(backendItem), base);
+  assert.equal("inventory_id" in merchantInventoryItem(backendItem), false);
+  assert.equal("record_version" in merchantInventoryItem(backendItem), false);
 });
 
 test("merchant download and reviewed source template stay identical", async () => {

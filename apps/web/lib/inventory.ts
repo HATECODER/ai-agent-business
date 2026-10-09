@@ -1,10 +1,6 @@
 export type InventoryStatus = "in_stock" | "low_stock" | "out_of_stock";
 
 export interface InventoryItem {
-  inventory_id: string;
-  product_id: string;
-  variant_id: string;
-  location_id: string;
   product_name: string;
   variant_name: string;
   sku: string;
@@ -12,12 +8,6 @@ export interface InventoryItem {
   location_name: string;
   quantity: number;
   low_stock_threshold: number;
-  is_low_stock: boolean;
-  base_price_minor: number | null;
-  currency: string | null;
-  record_version: number;
-  source_kind: string;
-  source_version: string | null;
   observed_at: string;
 }
 
@@ -25,6 +15,19 @@ export interface InventorySummary {
   total: number;
   lowStock: number;
   outOfStock: number;
+}
+
+export function merchantInventoryItem(item: InventoryItem): InventoryItem {
+  return {
+    product_name: item.product_name,
+    variant_name: item.variant_name,
+    sku: item.sku,
+    location_code: item.location_code,
+    location_name: item.location_name,
+    quantity: item.quantity,
+    low_stock_threshold: item.low_stock_threshold,
+    observed_at: item.observed_at,
+  };
 }
 
 export function inventoryStatus(item: Pick<InventoryItem, "quantity" | "low_stock_threshold">): InventoryStatus {
