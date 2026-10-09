@@ -27,6 +27,22 @@ try {
         }
     }
 
+    $frontendRoot = Join-Path (Get-Location) 'apps\web'
+    $frontendSteps = @(
+        @{ Name = 'Frontend dependency audit'; Args = @('--prefix', $frontendRoot, 'audit', '--audit-level=high') },
+        @{ Name = 'Frontend tests'; Args = @('--prefix', $frontendRoot, 'test') },
+        @{ Name = 'Frontend typecheck'; Args = @('--prefix', $frontendRoot, 'run', 'typecheck') },
+        @{ Name = 'Frontend production build'; Args = @('--prefix', $frontendRoot, 'run', 'build') },
+        @{ Name = 'Frontend build verification'; Args = @('--prefix', $frontendRoot, 'run', 'verify:build') }
+    )
+    foreach ($step in $frontendSteps) {
+        Write-Host ("Running {0}..." -f $step.Name)
+        & npm.cmd @($step.Args)
+        if ($LASTEXITCODE -ne 0) {
+            throw ("{0} failed." -f $step.Name)
+        }
+    }
+
     Write-Host 'BUILD security gate passed. GitHub Actions will also verify the Linux Docker build.'
 }
 finally {

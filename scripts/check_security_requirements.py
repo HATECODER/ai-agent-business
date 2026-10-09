@@ -23,6 +23,7 @@ REQUIRED_FILES = (
     ".env.example",
     "requirements.lock.txt",
     "requirements-dev.txt",
+    "apps/web/package-lock.json",
     "scripts/check_secrets.py",
     "scripts/security_gate.ps1",
 )
@@ -33,6 +34,8 @@ REQUIRED_IGNORES = (
     "*.sqlite3",
     ".streamlit/secrets.toml",
     "backups/",
+    "node_modules/",
+    ".next/",
 )
 
 REQUIRED_WORKFLOW_MARKERS = (
@@ -46,6 +49,10 @@ REQUIRED_WORKFLOW_MARKERS = (
     "pip-audit",
     "pytest",
     "run_load_check.py",
+    "npm audit --audit-level=high",
+    "npm run typecheck",
+    "npm run build",
+    "npm run verify:build",
     "docker build",
 )
 

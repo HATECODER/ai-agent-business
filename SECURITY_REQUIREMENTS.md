@@ -263,15 +263,23 @@ Record commit/artifact digest, enabled features/stage, gate results, identity/te
 - bounded AI calls, sanitized failures, and deterministic inventory/finance;
 - backup/restore tooling and release evidence.
 
+### Implemented production-track foundations; not enabled for real merchant data
+
+- fixed merchant roles, active memberships, managed bearer validation, and
+  PostgreSQL forced RLS with two-tenant tests;
+- read-only tenant inventory API plus staged CSV validation/preview metadata;
+- separate Next.js merchant inventory presentation with exact dependency lock,
+  deterministic tests, strict typechecking, and production build in CI.
+
 ### Not yet implemented; related production feature must remain disabled
 
-- commercial multi-tenant memberships/roles and PostgreSQL RLS;
 - production Platform Admin/support console;
 - production malware-scanner deployment, proxy upload limits, retained-file
   quarantine, expired-preview purge, and inventory import apply;
 - connector/webhook ingestion and reconciliation;
 - private object storage and tenant-scoped exports;
-- production MFA/session/re-authentication flows;
+- managed merchant browser session/BFF, production MFA, CSRF, session rotation,
+  logout/revocation, and recent reauthentication flows;
 - RAG ACL/version deletion;
 - DAST, SBOM/artifact attestation, and independent penetration test;
 - real merchant retention/deletion and production incident operation.

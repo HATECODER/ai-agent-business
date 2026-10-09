@@ -32,6 +32,8 @@ Current implemented boundary:
   metadata, and formula-safe error CSVs;
 - a mandatory injected malware-scanner boundary. Without a reviewed scanner,
   preview fails closed with `503`; raw CSV bytes are never persisted.
+- workspace capability discovery returns the active role's permission names for
+  the separate merchant UI; it never replaces endpoint authorization.
 
 Run locally after installing the root locked requirements:
 
@@ -78,3 +80,8 @@ it unavailable until a reviewed malware scanner is injected, and no import
 apply endpoint exists. See
 [Decision 0007](../docs/decisions/0007-phase1-inventory-import-preview.md) and
 the [CSV template](../docs/templates/inventory-import-template.csv).
+
+Phase 1F adds the separate merchant inventory interface under
+[`apps/web`](../apps/web/README.md). It remains disconnected until the managed
+browser-session/BFF checkpoint is accepted. See
+[Decision 0008](../docs/decisions/0008-phase1-merchant-inventory-ux.md).

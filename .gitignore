@@ -9,3 +9,6 @@ __pycache__/
 .streamlit/secrets.toml
 backups/
 docs/releases/*.json
+node_modules/
+.next/
+*.tsbuildinfo

@@ -5,7 +5,12 @@ from fastapi.testclient import TestClient
 import pytest
 
 from backend.app.api_auth import AuthServices
-from backend.app.authorization import AuthorizationDenied, MerchantRole, TenantAuthority
+from backend.app.authorization import (
+    AuthorizationDenied,
+    MerchantRole,
+    Permission,
+    TenantAuthority,
+)
 from backend.app.identity import (
     AuthenticationDenied,
     IdentityProviderUnavailable,
@@ -81,6 +86,10 @@ def test_protected_workspace_returns_current_server_authority_only():
         "workspace_id": TENANT_ID,
         "role": "owner",
         "permission_version": 3,
+        "permissions": [
+            permission.value
+            for permission in sorted(Permission, key=lambda item: item.value)
+        ],
     }
     assert len(response.headers["x-correlation-id"]) == 32
 

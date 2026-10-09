@@ -10,6 +10,7 @@ from backend.app.authorization import (
     AuthorizationDenied,
     Permission,
     TenantAuthority,
+    granted_permissions,
     require_permission,
 )
 from backend.app.database import create_database_engine
@@ -33,6 +34,7 @@ class WorkspaceSession(BaseModel):
     workspace_id: str
     role: str
     permission_version: int
+    permissions: list[str]
 
 
 def create_app(
@@ -73,6 +75,9 @@ def create_app(
             workspace_id=authority.tenant_id,
             role=authority.role.value,
             permission_version=authority.permission_version,
+            permissions=[
+                permission.value for permission in granted_permissions(authority)
+            ],
         )
 
     @app.get("/api/v1/inventory", response_model=InventoryPage)

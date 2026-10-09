@@ -311,6 +311,14 @@ def require_permission(
     return scope
 
 
+def granted_permissions(authority: TenantAuthority) -> tuple[Permission, ...]:
+    """Return grants for UI discovery; endpoint checks remain authoritative."""
+    if not isinstance(authority, TenantAuthority):
+        raise AuthorizationDenied("Permission denied.")
+    grants = ROLE_GRANTS.get(authority.role, {})
+    return tuple(sorted(grants, key=lambda permission: permission.value))
+
+
 def require_platform_permission(
     authority: PlatformAuthority,
     permission: PlatformPermission,
