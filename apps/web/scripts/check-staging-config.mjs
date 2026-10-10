@@ -10,6 +10,8 @@ const required = [
   "AUTH0_CLIENT_SECRET",
   "AUTH0_SECRET",
   "AUTH0_AUDIENCE",
+  "BIZPILOT_SESSION_REDIS_URL",
+  "BIZPILOT_SESSION_ENCRYPTION_KEY",
   "BIZPILOT_OIDC_ISSUER",
   "BIZPILOT_OIDC_AUDIENCE",
   "BIZPILOT_OIDC_JWKS_URL",
@@ -64,6 +66,25 @@ if (contents) {
   }
   if (env.AUTH0_SECRET && !/^[0-9a-f]{64}$/iu.test(env.AUTH0_SECRET)) {
     failures.push("AUTH0_SECRET must contain exactly 64 hexadecimal characters.");
+  }
+  if (env.BIZPILOT_SESSION_ENCRYPTION_KEY && !/^[0-9a-f]{64}$/iu.test(env.BIZPILOT_SESSION_ENCRYPTION_KEY)) {
+    failures.push("BIZPILOT_SESSION_ENCRYPTION_KEY must contain exactly 64 hexadecimal characters.");
+  }
+  if (env.BIZPILOT_SESSION_REDIS_URL) {
+    try {
+      const redis = new URL(env.BIZPILOT_SESSION_REDIS_URL);
+      const authenticatedTls = redis.protocol === "rediss:" && Boolean(redis.password);
+      const renderPrivateNetwork =
+        redis.protocol === "redis:" &&
+        /^red-[a-z0-9-]+$/iu.test(redis.hostname) &&
+        !redis.username &&
+        !redis.password;
+      if ((!authenticatedTls && !renderPrivateNetwork) || !redis.hostname || redis.search || redis.hash || !["", "/"].includes(redis.pathname)) {
+        failures.push("BIZPILOT_SESSION_REDIS_URL must use authenticated TLS or a Render private-network Redis host.");
+      }
+    } catch {
+      failures.push("BIZPILOT_SESSION_REDIS_URL is invalid.");
+    }
   }
   if (env.AUTH0_DOMAIN && !/^(?:[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?\.)+[a-z]{2,}$/iu.test(env.AUTH0_DOMAIN)) {
     failures.push("AUTH0_DOMAIN must be a hostname without a scheme or path.");

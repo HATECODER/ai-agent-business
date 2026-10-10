@@ -61,3 +61,7 @@ services:
         sync: false
       - key: AUTH0_AUDIENCE
         sync: false
+      - key: BIZPILOT_SESSION_REDIS_URL
+        sync: false
+      - key: BIZPILOT_SESSION_ENCRYPTION_KEY
+        sync: false

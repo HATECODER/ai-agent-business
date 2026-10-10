@@ -11,6 +11,8 @@ export interface Auth0Config {
   clientSecret: string;
   domain: string;
   secret: string;
+  sessionEncryptionKey: string;
+  sessionRedisUrl: string;
 }
 
 const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
@@ -49,12 +51,32 @@ export function parseAuth0Config(env: NodeJS.ProcessEnv): Auth0Config {
   if (!/^(?:[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?\.)+[a-z]{2,}$/u.test(domain)) throw new Error("AUTH0_DOMAIN is invalid.");
   const secret = bounded("AUTH0_SECRET", env.AUTH0_SECRET, 64);
   if (!/^[0-9a-f]{64}$/iu.test(secret)) throw new Error("AUTH0_SECRET must be 32 bytes encoded as hex.");
+  const sessionEncryptionKey = bounded("BIZPILOT_SESSION_ENCRYPTION_KEY", env.BIZPILOT_SESSION_ENCRYPTION_KEY, 64);
+  if (!/^[0-9a-f]{64}$/iu.test(sessionEncryptionKey)) throw new Error("BIZPILOT_SESSION_ENCRYPTION_KEY must be 32 bytes encoded as hex.");
+  const sessionRedisUrl = bounded("BIZPILOT_SESSION_REDIS_URL", env.BIZPILOT_SESSION_REDIS_URL, 2048);
+  let redis: URL;
+  try {
+    redis = new URL(sessionRedisUrl);
+  } catch {
+    throw new Error("BIZPILOT_SESSION_REDIS_URL is invalid.");
+  }
+  const authenticatedTls = redis.protocol === "rediss:" && Boolean(redis.password);
+  const renderPrivateNetwork =
+    redis.protocol === "redis:" &&
+    /^red-[a-z0-9-]+$/iu.test(redis.hostname) &&
+    !redis.username &&
+    !redis.password;
+  if ((!authenticatedTls && !renderPrivateNetwork) || !redis.hostname || redis.search || redis.hash || !["", "/"].includes(redis.pathname)) {
+    throw new Error("BIZPILOT_SESSION_REDIS_URL must use authenticated TLS or a Render private-network Redis host.");
+  }
   return {
     audience: bounded("AUTH0_AUDIENCE", env.AUTH0_AUDIENCE, 512),
     clientId: bounded("AUTH0_CLIENT_ID", env.AUTH0_CLIENT_ID, 512),
     clientSecret: bounded("AUTH0_CLIENT_SECRET", env.AUTH0_CLIENT_SECRET, 1024),
     domain,
     secret,
+    sessionEncryptionKey,
+    sessionRedisUrl,
   };
 }
 

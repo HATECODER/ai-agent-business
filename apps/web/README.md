@@ -11,6 +11,7 @@ Phase 1F implements the inventory presentation and capability boundary. Phase
 - role-aware import visibility based on server-provided permission names;
 - downloadable UTF-8 CSV template and an honest preview-only workflow;
 - Auth0 Universal Login with an encrypted HTTP-only, SameSite session cookie;
+- encrypted Redis-backed server sessions with issuer-scoped logout indexes;
 - server-only access-token forwarding to the FastAPI API;
 - one server-configured active workspace, so browser input cannot grant tenant authority;
 - live inventory read and same-origin CSV preview forwarding;
@@ -65,3 +66,12 @@ npm run browser:authenticated
 committed, shared, uploaded, or retained after the validation window. The
 repository ignore policy excludes it. Browser tests use installed Microsoft
 Edge locally and pinned Playwright Chromium in CI.
+
+Staging and production also require an authenticated TLS Redis URL in
+`BIZPILOT_SESSION_REDIS_URL` and a separate 32-byte hex key in
+`BIZPILOT_SESSION_ENCRYPTION_KEY`. Session payloads are AES-256-GCM encrypted
+before storage. Session and issuer-scoped `sid`/`sub` index keys are hashed,
+and all records have an eight-hour maximum TTL. Configure the Auth0
+Back-Channel Logout URI as
+`https://<web-host>/auth/backchannel-logout`. A real signed logout event must
+invalidate an existing browser session before the revocation gate is accepted.

@@ -3,6 +3,7 @@ import "server-only";
 import { Auth0Client } from "@auth0/nextjs-auth0/server";
 
 import { hasCompleteBffConfiguration, readAuth0Config, readBffConfig } from "./bff-config";
+import { createRedisSessionStore } from "./redis-session-store";
 
 let client: Auth0Client | undefined;
 
@@ -12,6 +13,7 @@ export function getAuth0Client(): Auth0Client | null {
 
   const auth = readAuth0Config();
   const bff = readBffConfig();
+  const issuer = `https://${auth.domain}/`;
   client = new Auth0Client({
     appBaseUrl: bff.appBaseUrl,
     domain: auth.domain,
@@ -25,6 +27,7 @@ export function getAuth0Client(): Auth0Client | null {
     enableAccessTokenEndpoint: false,
     enableTelemetry: false,
     signInReturnToPath: "/inventory",
+    sessionStore: createRedisSessionStore(auth.sessionRedisUrl, auth.sessionEncryptionKey, issuer),
     session: {
       rolling: false,
       absoluteDuration: 8 * 60 * 60,

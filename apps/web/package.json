@@ -19,7 +19,8 @@
     "@auth0/nextjs-auth0": "4.31.1",
     "next": "16.4.0",
     "react": "19.3.0",
-    "react-dom": "19.3.0"
+    "react-dom": "19.3.0",
+    "redis": "6.3.0"
   },
   "devDependencies": {
     "@playwright/test": "1.64.0",
