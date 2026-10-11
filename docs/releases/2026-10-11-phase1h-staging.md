@@ -29,6 +29,7 @@
 | Stateful session storage | AES-256-GCM encrypted sessions used the same-region Render private network; public Redis access remained disabled |
 | Auth0 back-channel logout | A real signed Account Deactivated event invalidated the captured Redis-backed browser session |
 | Suspended identity | The blocked test identity failed closed; it was unblocked after validation |
+| Wrong workspace | A valid but unassigned workspace UUID was denied without data or internal-ID disclosure; the original Owner workspace was restored and reverified |
 | Credential cleanup | Temporary migration credential removed after each administrative operation |
 | Session cleanup | Captured browser state and temporary verification artifacts were deleted after validation |
 
@@ -49,7 +50,7 @@ the local test output. The value is not reproduced in this record. Response:
 
 | Item | State / required work |
 |---|---|
-| Wrong workspace and cross-tenant object | Existing unit/PostgreSQL coverage passes, but deployed bearer-token adversarial evidence is still required. Keep the fixed server-selected workspace and do not expose tokens to the browser. |
+| Cross-tenant object | Wrong-workspace denial now has deployed evidence. Object-specific deployed bearer-token adversarial evidence is still required; keep the fixed server-selected workspace and do not expose tokens to the browser. |
 | XSS CSV rendering | Apply is disabled and deployed preview processing is not enabled. Run payload rendering tests when the reviewed preview service is enabled. |
 | Oversized upload at edge | Edge rejection before multipart parsing is not implemented/proven; keep real upload disabled. |
 | Provider/API outage | Free-tier cold-start unavailable state was observed and sanitized, but a controlled outage/log-redaction exercise remains. |
@@ -59,9 +60,9 @@ the local test output. The value is not reproduced in this record. Response:
 
 Phase 1H remains **in progress**, but its Auth0 back-channel revocation blocker
 is resolved. The authenticated BFF, stateful session revocation, suspended
-identity, membership revocation, role-change, expiry, callback, logout and
-browser-token boundaries have deployed evidence. Wrong-workspace/cross-tenant,
-CSV XSS, edge upload and controlled outage rows remain before final Phase 1H
-acceptance. Proceed only with the restricted demonstration boundary while the
-listed features stay disabled; do not describe this staging environment as
-production-ready.
+identity, membership revocation, role-change, wrong-workspace denial, expiry,
+callback, logout and browser-token boundaries have deployed evidence.
+Cross-tenant object, CSV XSS, edge upload and controlled outage rows remain
+before final Phase 1H acceptance. Proceed only with the restricted
+demonstration boundary while the listed features stay disabled; do not
+describe this staging environment as production-ready.

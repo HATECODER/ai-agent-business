@@ -96,7 +96,7 @@ reference for every row. Never record cookies, tokens or customer data.
 | Suspended identity | Next API request denied | Passed 2026-10-11; blocked test identity lost application access, then was unblocked |
 | Removed membership | Next API request denied | Passed 2026-10-11; active browser session denied on next request |
 | Role/permission change | Next request uses current server grants | Passed 2026-10-11; Viewer permissions applied, then Owner restored |
-| Wrong workspace ID | Membership resolution denies access | Pending |
+| Wrong workspace ID | Membership resolution denies access | Passed 2026-10-11; an unassigned staging workspace failed closed, then Owner workspace access was restored and reverified |
 | Direct FastAPI without bearer | `401` sanitized response | Passed 2026-10-11; generic detail and Bearer challenge |
 | Cross-tenant object attempt | No data or existence disclosure | Pending |
 | CSRF preview request | Exact-origin check rejects request | Passed 2026-10-10; cross-origin request returned rejection |
