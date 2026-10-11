@@ -14,13 +14,14 @@ the test identity to active Owner authority afterward. The captured application
 cookie had the configured eight-hour absolute lifetime, and a browser context
 with that cookie expired was required to reauthenticate.
 
-Provider-initiated back-channel logout is a confirmed blocker. The installed
-Auth0 SDK exposes `/auth/backchannel-logout`, but it requires a shared session
-store implementing logout-token deletion. The current encrypted stateless
-cookie configuration has no such store, and the deployed endpoint failed
-closed with HTTP 500 on 2026-10-11. Phase 1H must not claim Auth0 revocation
-until a protected shared session store is implemented and a real signed logout
-event invalidates the captured browser session.
+Provider-initiated back-channel logout passed on 2026-10-11 at release
+`f2ac444`. The web service stores AES-256-GCM encrypted sessions in a
+same-region Render private-network Key Value service, with hashed issuer,
+subject and session indexes and an eight-hour maximum TTL. After Auth0 sent a
+real signed `Account Deactivated` logout event, the previously captured browser
+session lost access and the protected page returned the signed-out state. The
+test identity was unblocked afterward and the captured browser state was
+deleted.
 
 ## Safety rules
 
@@ -91,8 +92,8 @@ reference for every row. Never record cookies, tokens or customer data.
 | Invalid callback/state | Callback rejected; no local session created | Passed 2026-10-11; rejected callback granted no authenticated access |
 | Logout | Application session removed; protected page fails closed | Passed 2026-10-10; deployed HTTPS authenticated suite |
 | Expired eight-hour session | Reauthentication required | Passed 2026-10-11; configured lifetime confirmed and expired cookie rejected |
-| Auth0/back-channel revocation | Existing session loses access within the accepted window | Blocked: stateless SDK session has no logout-token session store; endpoint fails closed |
-| Suspended identity | Next API request denied | Pending |
+| Auth0/back-channel revocation | Existing session loses access within the accepted window | Passed 2026-10-11; signed Account Deactivated event removed the Redis-backed session |
+| Suspended identity | Next API request denied | Passed 2026-10-11; blocked test identity lost application access, then was unblocked |
 | Removed membership | Next API request denied | Passed 2026-10-11; active browser session denied on next request |
 | Role/permission change | Next request uses current server grants | Passed 2026-10-11; Viewer permissions applied, then Owner restored |
 | Wrong workspace ID | Membership resolution denies access | Pending |

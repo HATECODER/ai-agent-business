@@ -2,7 +2,7 @@
 
 ## Scope
 
-- Render HTTPS web and API staging services at release `e20a541`.
+- Render HTTPS web and API staging services through release `f2ac444`.
 - Auth0 Regular Web Application and custom API.
 - Supabase PostgreSQL with migrations `0001`–`0004` and restricted runtime/authenticator roles.
 - Dedicated synthetic Auth0 database test user and synthetic merchant workspace.
@@ -26,7 +26,11 @@
 | Cross-origin preview | Rejected with HTTP 403 |
 | Membership revocation | Existing browser session denied on its next request |
 | Role change | Existing session applied Viewer grants immediately; Owner was restored afterward |
+| Stateful session storage | AES-256-GCM encrypted sessions used the same-region Render private network; public Redis access remained disabled |
+| Auth0 back-channel logout | A real signed Account Deactivated event invalidated the captured Redis-backed browser session |
+| Suspended identity | The blocked test identity failed closed; it was unblocked after validation |
 | Credential cleanup | Temporary migration credential removed after each administrative operation |
+| Session cleanup | Captured browser state and temporary verification artifacts were deleted after validation |
 
 ## Security incident during validation
 
@@ -45,18 +49,19 @@ the local test output. The value is not reproduced in this record. Response:
 
 | Item | State / required work |
 |---|---|
-| Auth0 back-channel logout | **Blocked.** Current encrypted stateless sessions have no shared session store implementing logout-token deletion. The SDK endpoint fails closed with HTTP 500. Implement a protected shared session store, configure Auth0 back-channel logout, and prove a signed event invalidates an existing browser session. |
 | Wrong workspace and cross-tenant object | Existing unit/PostgreSQL coverage passes, but deployed bearer-token adversarial evidence is still required. Keep the fixed server-selected workspace and do not expose tokens to the browser. |
 | XSS CSV rendering | Apply is disabled and deployed preview processing is not enabled. Run payload rendering tests when the reviewed preview service is enabled. |
 | Oversized upload at edge | Edge rejection before multipart parsing is not implemented/proven; keep real upload disabled. |
 | Provider/API outage | Free-tier cold-start unavailable state was observed and sanitized, but a controlled outage/log-redaction exercise remains. |
-| Wider production operations | Shared session store, paid always-on hosting, monitoring, backup/restore and incident drill remain outside this staging checkpoint. |
+| Wider production operations | Paid persistent session hosting, monitoring, backup/restore and an incident drill remain outside this staging checkpoint. |
 
 ## Release decision
 
-Phase 1H is **not yet accepted** because back-channel revocation is an explicit
-exit requirement and is unsupported by the current stateless session design.
-The authenticated BFF, membership revocation, role-change, expiry, callback,
-logout and browser-token boundaries have deployed evidence. Proceed only with
-the restricted demonstration boundary while the listed features stay disabled;
-do not describe this staging environment as production-ready.
+Phase 1H remains **in progress**, but its Auth0 back-channel revocation blocker
+is resolved. The authenticated BFF, stateful session revocation, suspended
+identity, membership revocation, role-change, expiry, callback, logout and
+browser-token boundaries have deployed evidence. Wrong-workspace/cross-tenant,
+CSV XSS, edge upload and controlled outage rows remain before final Phase 1H
+acceptance. Proceed only with the restricted demonstration boundary while the
+listed features stay disabled; do not describe this staging environment as
+production-ready.
