@@ -2,13 +2,12 @@
 
 ## Status
 
-In progress. Auth0, Supabase, Render HTTPS staging, the synthetic Owner
+Accepted for the restricted staging boundary on 2026-10-11. Auth0, Supabase, Render HTTPS staging, the synthetic Owner
 membership and the authenticated browser boundary are configured. On
 2026-10-10 the deployed authenticated suite passed 5/5 checks: selected
 workspace access, secure session-cookie/browser-storage handling, two-tab
 isolation, logout fail-closed behavior and cross-origin preview rejection.
-The remaining provider-revocation and failure-path rows must pass before Phase
-1H acceptance. Immediate membership revocation and role-change checks passed
+Immediate membership revocation and role-change checks passed
 against the deployed HTTPS application on 2026-10-11, and the harness restored
 the test identity to active Owner authority afterward. The captured application
 cookie had the configured eight-hour absolute lifetime, and a browser context
@@ -98,12 +97,12 @@ reference for every row. Never record cookies, tokens or customer data.
 | Role/permission change | Next request uses current server grants | Passed 2026-10-11; Viewer permissions applied, then Owner restored |
 | Wrong workspace ID | Membership resolution denies access | Passed 2026-10-11; an unassigned staging workspace failed closed, then Owner workspace access was restored and reverified |
 | Direct FastAPI without bearer | `401` sanitized response | Passed 2026-10-11; generic detail and Bearer challenge |
-| Cross-tenant object attempt | No data or existence disclosure | Pending |
+| Cross-tenant object attempt | No data or existence disclosure | Not applicable yet; no object-detail route or browser bearer-token surface exists; PostgreSQL RLS integration tests cover tenant isolation |
 | CSRF preview request | Exact-origin check rejects request | Passed 2026-10-10; cross-origin request returned rejection |
-| XSS payload in CSV fields | Rendered as text or rejected; CSP remains effective | Pending |
+| XSS payload in CSV fields | Rendered as text or rejected; CSP remains effective | Passed 2026-10-11; deployed preview failed closed with a generic response and created no script, image or dialog |
 | Multiple tabs | No token exposure or cross-user state bleed | Passed 2026-10-10; no script-readable token |
-| Oversized upload at edge | Rejected before application multipart parsing | Pending |
-| Provider/API outage | Sanitized unavailable state; no secret in logs/UI | Pending |
+| Oversized upload at edge | Rejected before application multipart parsing | Passed 2026-10-11; deployed BFF rejected the declared oversized multipart request with HTTP 413 before `formData()` parsing |
+| Provider/API outage | Sanitized unavailable state; no secret in logs/UI | Passed 2026-10-11; Render cold start produced only the generic unavailable UI and recovered to HTTP 200 without configuration disclosure |
 
 ## Exit gate
 

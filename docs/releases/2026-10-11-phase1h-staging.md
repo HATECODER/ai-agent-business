@@ -30,6 +30,9 @@
 | Auth0 back-channel logout | A real signed Account Deactivated event invalidated the captured Redis-backed browser session |
 | Suspended identity | The blocked test identity failed closed; it was unblocked after validation |
 | Wrong workspace | A valid but unassigned workspace UUID was denied without data or internal-ID disclosure; the original Owner workspace was restored and reverified |
+| CSV XSS payload | The deployed preview path failed closed with a generic response; no payload-created script, image or dialog appeared |
+| Oversized upload | The deployed BFF rejected the declared oversized multipart request with HTTP 413 before multipart parsing |
+| API unavailable state | A Render cold start showed only the sanitized unavailable state, then recovered to HTTP 200 without configuration disclosure |
 | Credential cleanup | Temporary migration credential removed after each administrative operation |
 | Session cleanup | Captured browser state and temporary verification artifacts were deleted after validation |
 
@@ -50,19 +53,16 @@ the local test output. The value is not reproduced in this record. Response:
 
 | Item | State / required work |
 |---|---|
-| Cross-tenant object | Wrong-workspace denial now has deployed evidence. Object-specific deployed bearer-token adversarial evidence is still required; keep the fixed server-selected workspace and do not expose tokens to the browser. |
-| XSS CSV rendering | Apply is disabled and deployed preview processing is not enabled. Run payload rendering tests when the reviewed preview service is enabled. |
-| Oversized upload at edge | Edge rejection before multipart parsing is not implemented/proven; keep real upload disabled. |
-| Provider/API outage | Free-tier cold-start unavailable state was observed and sanitized, but a controlled outage/log-redaction exercise remains. |
+| Cross-tenant object | Not applicable to the current browser surface because no object-detail route or bearer-token surface exists. PostgreSQL RLS integration tests cover tenant isolation; add deployed adversarial evidence when such a route is introduced. |
+| CSV preview enablement | The deployed preview service deliberately fails closed until a reviewed malware scanner adapter is configured. Payload rejection was proven; preview and apply remain disabled. |
 | Wider production operations | Paid persistent session hosting, monitoring, backup/restore and an incident drill remain outside this staging checkpoint. |
 
 ## Release decision
 
-Phase 1H remains **in progress**, but its Auth0 back-channel revocation blocker
-is resolved. The authenticated BFF, stateful session revocation, suspended
+Phase 1H is **accepted for the restricted staging boundary**. The authenticated BFF, stateful session revocation, suspended
 identity, membership revocation, role-change, wrong-workspace denial, expiry,
 callback, logout and browser-token boundaries have deployed evidence.
-Cross-tenant object, CSV XSS, edge upload and controlled outage rows remain
-before final Phase 1H acceptance. Proceed only with the restricted
-demonstration boundary while the listed features stay disabled; do not
+The object-specific cross-tenant row is not applicable until an object-detail
+surface exists. Proceed only with the restricted demonstration boundary while
+the listed features stay disabled; do not
 describe this staging environment as production-ready.
