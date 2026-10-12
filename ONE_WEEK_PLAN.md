@@ -20,7 +20,7 @@ Exact meeting date and named teammates: to be confirmed by the Product Owner.
 | Day 10 - restock review and offline behavior | Approved 2026-10-12 | [Day 10 result](docs/NOVEMBER_DEMO_DAY10_RESULT.md) |
 | Day 11 - multilingual evaluation | Approved 2026-10-12 | [Day 11 result](docs/NOVEMBER_DEMO_DAY11_RESULT.md) |
 | Day 12 - changed boundaries and failure paths | Approved 2026-10-12 | [Day 12 result](docs/NOVEMBER_DEMO_DAY12_RESULT.md) |
-| Day 13 - candidate and recovery preparation | Prepared locally; awaiting push/deploy approval | [Day 13 result](docs/NOVEMBER_DEMO_DAY13_RESULT.md) |
+| Day 13 - candidate and recovery preparation | Approved, pushed and deployed 2026-10-12 | [Day 13 result](docs/NOVEMBER_DEMO_DAY13_RESULT.md) |
 | Day 14 onward | Not started | Continue with zero-cost reduced scope below |
 
 ## 1. Purpose and realistic timeline

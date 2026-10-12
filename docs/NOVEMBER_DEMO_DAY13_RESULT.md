@@ -1,7 +1,9 @@
 # November demo Day 13 result
 
 Date: 2026-10-12
-Status: local candidate prepared; awaiting Product Owner push/deploy approval
+Status: approved, pushed and deployed
+
+Candidate commit: `5180b592574ed55d5d7ab6ac4764aa93696dbeca`
 
 ## Candidate contents
 
@@ -36,12 +38,22 @@ Before creating the local release commit:
 - diff whitespace check: passed;
 - secret scan and tracked-file review: required immediately before commit.
 
-The final local commit SHA is reported by the operator after the commit is
-created. Remote CI and Render deployment cannot be claimed until the candidate
-is pushed and those services finish successfully.
+GitHub Actions
+[`offline-checks` run 38226411488](https://github.com/HATECODER/ai-agent-business/actions/runs/38226411488)
+completed successfully for the exact candidate commit. Its `test`,
+`postgres-rls`, `frontend` and dependent `docker` jobs all passed.
+
+Render auto-deployment was then observed through the new candidate behavior:
+
+- `GET https://bizpilot-hatecoder-staging-web.onrender.com/copilot` returned
+  `200`;
+- an unauthenticated valid request to
+  `POST https://bizpilot-hatecoder-staging-api.onrender.com/api/v1/copilot/query`
+  returned the expected sanitized `401` rather than `404`.
+
+Authenticated five-question browser rehearsal remains Day 14 work.
 
 ## Approval boundary
 
-Creating a local commit is reversible and does not change staging. Pushing the
-candidate triggers GitHub Actions and Render `checksPass` auto-deploy behavior,
-so the push is held for explicit Product Owner approval.
+The Product Owner explicitly approved the Day 13 push. No database credential,
+schema write or fixture reseed was required during this deployment.
