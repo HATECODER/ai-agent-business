@@ -59,7 +59,7 @@ async function runWalkthrough(page: Page) {
   await expect(page.locator(".copilot-answer")).toContainText(/TASK-001/iu);
   await expect(page.locator(".copilot-answer")).toContainText(/TASK-004/iu);
   await ask(page, "Prepare a restock review proposal.", /39 units/iu);
-  await expect(page.getByText("Review only", { exact: true })).toBeVisible();
+  await expect(page.locator(".proposal-state strong")).toHaveText("Review only");
   await expect(page.getByText("No external action has been taken.")).toBeVisible();
   await expect(page.getByRole("button", { name: /approve|execute|order|purchase/iu })).toHaveCount(0);
 }

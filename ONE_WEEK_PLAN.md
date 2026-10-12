@@ -21,7 +21,8 @@ Exact meeting date and named teammates: to be confirmed by the Product Owner.
 | Day 11 - multilingual evaluation | Approved 2026-10-12 | [Day 11 result](docs/NOVEMBER_DEMO_DAY11_RESULT.md) |
 | Day 12 - changed boundaries and failure paths | Approved 2026-10-12 | [Day 12 result](docs/NOVEMBER_DEMO_DAY12_RESULT.md) |
 | Day 13 - candidate and recovery preparation | Approved, pushed and deployed 2026-10-12 | [Day 13 result](docs/NOVEMBER_DEMO_DAY13_RESULT.md) |
-| Day 14 onward | Not started | Continue with zero-cost reduced scope below |
+| Day 14 - operator rehearsal | Approved 2026-10-12 | [Day 14 result](docs/NOVEMBER_DEMO_DAY14_RESULT.md) and [operator guide](docs/NOVEMBER_DEMO_OPERATOR_GUIDE.md) |
+| Day 15 - acceptance and freeze | Approved and frozen 2026-10-12 | [Day 15 result](docs/NOVEMBER_DEMO_DAY15_RESULT.md) and [acceptance record](docs/NOVEMBER_DEMO_ACCEPTANCE.md) |
 
 ## 1. Purpose and realistic timeline
 
@@ -226,20 +227,20 @@ and redacted evidence location. A check passes only after its assertions execute
 A disabled preview's 503 proves denial, not successful preview or safe rendering
 of returned content.
 
-- [ ] Approved account sees only its intended workspace.
-- [ ] Seeded inventory and summaries match the fixture.
-- [ ] Offline parser tests classify valid/new/changed/error/conflict cases correctly.
-- [ ] Deployed preview remains unavailable and does not accept or retain raw uploads.
-- [ ] Dormant scanner adapter tests cover rejection, outage, timeout and malformed responses.
-- [ ] Live preview, freshness, rate limits, purge and enabled-rendering XSS checks remain recorded as funded follow-up work.
-- [ ] Five questions have correct facts across three language variants.
-- [ ] Missing data and provider failure are clear; offline mode is labeled.
-- [ ] Restock proposal has evidence and no executable external action.
-- [ ] Desktop/mobile and controlled failure states are usable.
-- [ ] No secrets/tokens appear in UI or ordinary logs; temporary auth files are removed.
-- [ ] Candidate CI, relevant local tests, restore and rollback evidence are complete.
-- [ ] Two clean-browser rehearsals pass and backup material is ready.
-- [ ] Owner and reviewer record readiness and known limitations.
+- [x] Approved account sees only its intended workspace.
+- [x] Seeded inventory and summaries match the fixture.
+- [x] Offline parser tests classify valid/new/changed/error/conflict cases correctly.
+- [x] Deployed preview remains unavailable and does not accept or retain raw uploads.
+- [x] Dormant scanner adapter tests cover rejection, outage, timeout and malformed responses.
+- [x] Live preview, freshness, rate limits, purge and enabled-rendering XSS checks remain recorded as funded follow-up work.
+- [x] Five questions have correct facts across three language variants.
+- [x] Missing data and provider failure are clear; offline mode is labeled.
+- [x] Restock proposal has evidence and no executable external action.
+- [x] Desktop/mobile and controlled failure states are usable.
+- [x] No secrets/tokens appear in UI or ordinary logs; temporary auth state was removed after rehearsal.
+- [x] Candidate CI, relevant local tests, restore and rollback evidence are complete.
+- [x] Two clean-browser rehearsals pass and backup material is ready.
+- [x] Product Owner records readiness and known limitations; independent teammate review remains scheduled for T-5.
 
 Reuse auth evidence where behavior is unchanged. For implementation changes,
 run applicable repository checks, including `run.ps1 -CheckOnly` as required by

@@ -60,7 +60,15 @@ an ignored local browser state:
 ```powershell
 npm run browser:auth:capture
 npm run browser:authenticated
+npm run browser:demo:rehearse
 ```
+
+The demo rehearsal runs two isolated Inventory/Copilot walkthroughs plus phone,
+tablet and desktop fit checks. It records local fallback videos under
+`test-results/`; those authenticated recordings are ignored and must not be
+committed or publicly shared. The capture window uses the operator's available
+window size. Free Render services can take about a minute to wake, so the BFF
+allows 65 seconds for an upstream response before showing an unavailable state.
 
 `playwright/.auth/merchant.json` contains an active session and must never be
 committed, shared, uploaded, or retained after the validation window. The
