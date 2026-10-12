@@ -69,7 +69,10 @@ export type WorkspaceLoad =
       inventory: InventoryPage;
     };
 
-const REQUEST_TIMEOUT_MS = 8000;
+// Render free services can need around a minute to wake after inactivity.
+// Keep the first authenticated page load alive long enough to complete that
+// cold start; subsequent requests return normally once the API is warm.
+const REQUEST_TIMEOUT_MS = 65_000;
 
 export function apiHeaders(token: string, workspaceId: string): HeadersInit {
   return {

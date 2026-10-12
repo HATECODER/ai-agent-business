@@ -11,6 +11,7 @@
     "staging:preflight": "node scripts/check-staging-config.mjs",
     "browser:security": "npm run build && playwright test e2e/unauthenticated-security.spec.ts",
     "browser:authenticated": "playwright test e2e/authenticated-security.spec.ts",
+    "browser:demo:rehearse": "playwright test e2e/november-demo-rehearsal.spec.ts",
     "browser:auth:capture": "node e2e/capture-auth-state.mjs",
     "typecheck": "tsc --noEmit",
     "verify:build": "node scripts/verify-build.mjs"
