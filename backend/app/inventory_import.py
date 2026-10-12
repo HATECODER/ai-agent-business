@@ -25,7 +25,6 @@ from sqlalchemy.exc import SQLAlchemyError
 from backend.app.authorization import TenantAuthority
 from backend.app.database import tenant_transaction
 
-
 MAX_FILE_BYTES = 5 * 1024 * 1024
 MAX_ROWS = 10_000
 MAX_ERRORS = 200
@@ -530,3 +529,23 @@ def database_error_reporter(engine: Engine) -> ImportErrorReporter:
         return output.getvalue().encode("utf-8")
 
     return report
+
+
+def purge_expired_import_metadata(engine: Engine) -> int:
+    """Delete expired preview metadata with a separately privileged engine.
+
+    The foreign key cascade removes associated error rows. The normal runtime
+    database role intentionally has no DELETE grant, so this function belongs in
+    an operator-controlled maintenance job.
+    """
+    try:
+        with engine.begin() as connection:
+            result = connection.execute(
+                text("""
+                    DELETE FROM inventory_import_previews
+                    WHERE expires_at <= CURRENT_TIMESTAMP
+                """)
+            )
+            return max(result.rowcount or 0, 0)
+    except SQLAlchemyError as error:
+        raise ImportPreviewUnavailable("Import metadata cleanup failed.") from error

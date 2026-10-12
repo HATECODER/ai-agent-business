@@ -11,6 +11,18 @@ test("inventory fails closed without a managed session", async ({ page }) => {
   await expect(page.getByRole("button", { name: /preview/i })).toBeDisabled();
 });
 
+test("mobile inventory shell has no page-level horizontal overflow", async ({ page }) => {
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.goto("/inventory");
+  const dimensions = await page.evaluate(() => ({
+    viewport: document.documentElement.clientWidth,
+    page: document.documentElement.scrollWidth,
+  }));
+  expect(dimensions.page).toBeLessThanOrEqual(dimensions.viewport);
+  await expect(page.getByText("Live CSV preview is not enabled")).toBeVisible();
+  await expect(page.getByRole("button", { name: "Preview unavailable" })).toBeDisabled();
+});
+
 test("application responses carry the browser security policy", async ({ page }) => {
   const response = await page.goto("/inventory");
   const headers = response?.headers() ?? {};

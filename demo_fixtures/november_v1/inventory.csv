@@ -1,0 +1,13 @@
+product_name,variant_name,sku,location_code,location_name,quantity,low_stock_threshold,variant_options,base_price_bdt,expected_record_version
+Cotton T-Shirt,Black M,BP-TS-BLK-M,DHAKA,Dhaka Main,3,5,"{""color"":""Black"",""size"":""M""}",850.00,1
+Cotton T-Shirt,Black L,BP-TS-BLK-L,DHAKA,Dhaka Main,8,5,"{""color"":""Black"",""size"":""L""}",850.00,1
+Everyday Kurti,Blue M,BP-KUR-BLU-M,DHAKA,Dhaka Main,0,4,"{""color"":""Blue"",""size"":""M""}",1650.00,1
+Everyday Kurti,Blue L,BP-KUR-BLU-L,DHAKA,Dhaka Main,4,4,"{""color"":""Blue"",""size"":""L""}",1650.00,1
+Chino Pants,Navy 32,BP-PAN-NVY-32,DHAKA,Dhaka Main,12,6,"{""color"":""Navy"",""size"":""32""}",1950.00,1
+Chino Pants,Navy 34,BP-PAN-NVY-34,DHAKA,Dhaka Main,2,6,"{""color"":""Navy"",""size"":""34""}",1950.00,1
+Casual Sandal,Brown 40,BP-SND-BRN-40,CTG,Chattogram Outlet,5,3,"{""color"":""Brown"",""size"":""40""}",1450.00,1
+Casual Sandal,Brown 42,BP-SND-BRN-42,CTG,Chattogram Outlet,3,3,"{""color"":""Brown"",""size"":""42""}",1450.00,1
+Canvas Bag,Tan,BP-BAG-TAN,DHAKA,Dhaka Main,1,2,"{""color"":""Tan""}",1200.00,1
+Everyday Cap,Green,BP-CAP-GRN,CTG,Chattogram Outlet,10,4,"{""color"":""Green""}",550.00,1
+Cotton Scarf,Red,BP-SCR-RED,DHAKA,Dhaka Main,0,2,"{""color"":""Red""}",650.00,1
+Leather Belt,Black,BP-BEL-BLK,CTG,Chattogram Outlet,6,2,"{""color"":""Black""}",900.00,1

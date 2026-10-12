@@ -1,0 +1,10 @@
+{
+  "fixture_version": "november-v1",
+  "reference_date": "2026-11-01",
+  "timezone": "Asia/Dhaka",
+  "currency": "BDT",
+  "source": "synthetic_demo_data",
+  "workspace_label": "BizPilot Staging Merchant",
+  "inactive_days": 30,
+  "restock_target_threshold_multiplier": 2
+}

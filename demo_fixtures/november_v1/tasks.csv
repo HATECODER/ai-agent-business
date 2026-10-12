@@ -1,0 +1,6 @@
+task_key,title,category,priority,status
+TASK-001,Confirm dispatch list,operations,high,pending
+TASK-002,Review outstanding receivables,finance,high,in_progress
+TASK-003,Check low-stock display,operations,medium,pending
+TASK-004,Review November content,growth,low,pending
+TASK-005,Archive completed sample task,operations,medium,completed

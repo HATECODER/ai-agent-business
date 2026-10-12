@@ -6,6 +6,7 @@ import getpass
 from pathlib import Path
 from urllib.parse import quote, urlsplit, urlunsplit
 
+import psycopg
 
 ENV_KEY = "BIZPILOT_MIGRATION_DATABASE_URL"
 PASSWORD_MARKERS = ("[YOUR-PASSWORD]", "[YOUR_PASSWORD]")
@@ -55,6 +56,19 @@ def _write_env(path: Path, url: str) -> None:
     path.write_text("\n".join(updated) + "\n", encoding="utf-8")
 
 
+def _verify_connection(url: str) -> None:
+    psycopg_url = url.replace("postgresql+psycopg://", "postgresql://", 1)
+    try:
+        with psycopg.connect(psycopg_url, connect_timeout=10) as connection:
+            if connection.execute("SELECT 1").fetchone() != (1,):
+                raise RuntimeError("Database connection verification failed.")
+    except psycopg.Error as error:
+        raise RuntimeError(
+            "Could not authenticate to the Supabase Session pooler. Check the "
+            "current database password and URI template."
+        ) from error
+
+
 def main() -> int:
     print("Paste the Supabase Session pooler URI template with [YOUR-PASSWORD].")
     template = input("URI template: ").strip()
@@ -64,8 +78,9 @@ def main() -> int:
         return 1
     try:
         url = _build_url(template, password)
+        _verify_connection(url)
         _write_env(Path(__file__).resolve().parents[1] / ".env", url)
-    except ValueError as exc:
+    except (RuntimeError, ValueError) as exc:
         print(f"Configuration rejected: {exc}")
         return 1
     print(f"{ENV_KEY} configured without displaying the credential.")

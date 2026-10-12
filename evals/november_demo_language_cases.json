@@ -1,0 +1,23 @@
+{
+  "version": "november-demo-v1",
+  "reference_date": "2026-11-01",
+  "cases": [
+    {"id": "en-restock", "language": "English", "prompt": "Which products need restocking?", "expected_question_type": "restock"},
+    {"id": "en-finance", "language": "English", "prompt": "Show today's financial summary.", "expected_question_type": "finance"},
+    {"id": "en-inactive", "language": "English", "prompt": "Which customers have been inactive for 30 days?", "expected_question_type": "inactive_customers"},
+    {"id": "en-tasks", "language": "English", "prompt": "What tasks need attention?", "expected_question_type": "tasks"},
+    {"id": "en-proposal", "language": "English", "prompt": "Prepare a restock review proposal.", "expected_question_type": "restock_proposal"},
+
+    {"id": "bn-restock", "language": "Bangla", "prompt": "কোন পণ্যে আবার স্টক আনতে হবে?", "expected_question_type": "restock"},
+    {"id": "bn-finance", "language": "Bangla", "prompt": "আজকের আর্থিক সারাংশ দেখাও।", "expected_question_type": "finance"},
+    {"id": "bn-inactive", "language": "Bangla", "prompt": "৩০ দিন ধরে নিষ্ক্রিয় গ্রাহক কারা?", "expected_question_type": "inactive_customers"},
+    {"id": "bn-tasks", "language": "Bangla", "prompt": "কোন কাজগুলোতে নজর দেওয়া দরকার?", "expected_question_type": "tasks"},
+    {"id": "bn-proposal", "language": "Bangla", "prompt": "একটি রিস্টক প্রস্তাব তৈরি করো।", "expected_question_type": "restock_proposal"},
+
+    {"id": "bl-restock", "language": "Banglish", "prompt": "Kon product restock korte hobe?", "expected_question_type": "restock"},
+    {"id": "bl-finance", "language": "Banglish", "prompt": "Ajker financial summary dekhao.", "expected_question_type": "finance"},
+    {"id": "bl-inactive", "language": "Banglish", "prompt": "Kon customer 30 din inactive?", "expected_question_type": "inactive_customers"},
+    {"id": "bl-tasks", "language": "Banglish", "prompt": "Kon task e attention dorkar?", "expected_question_type": "tasks"},
+    {"id": "bl-proposal", "language": "Banglish", "prompt": "Ekta restock review proposal banao.", "expected_question_type": "restock_proposal"}
+  ]
+}

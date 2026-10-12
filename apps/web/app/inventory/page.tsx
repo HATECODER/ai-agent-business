@@ -13,6 +13,7 @@ export default async function InventoryPage() {
       permissions={ready ? result.workspace.permissions : []}
       items={ready ? result.inventory.items : []}
       connectionState={result.state}
+      previewAvailable={process.env.BIZPILOT_IMPORT_PREVIEW_ENABLED?.trim().toLowerCase() === "true"}
     />
   );
 }

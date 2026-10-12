@@ -1,9 +1,10 @@
 """Commercial API shell with managed identity and tenant authorization."""
 
+from datetime import date
 from uuid import UUID, uuid4
 
 from fastapi import Depends, FastAPI, File, Query, Request, Response, UploadFile
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 from backend.app.api_auth import AuthServices, deny_request, require_tenant_authority
 from backend.app.authorization import (
@@ -12,6 +13,18 @@ from backend.app.authorization import (
     TenantAuthority,
     granted_permissions,
     require_permission,
+)
+from backend.app.business_facts import (
+    BusinessFactsUnavailable,
+    database_attention_task_reader,
+    database_finance_reader,
+    database_inactive_customer_reader,
+)
+from backend.app.copilot import (
+    CopilotAnswer,
+    CopilotReader,
+    UnsupportedQuestion,
+    build_copilot_reader,
 )
 from backend.app.database import create_database_engine
 from backend.app.inventory import (
@@ -27,7 +40,10 @@ from backend.app.inventory_import import (
     ImportRejected,
     InventoryImportPreview,
     InventoryImportPreviewer,
+    database_error_reporter,
+    database_import_previewer,
 )
+from backend.app.malware_scanner import clamd_scanner_from_environment
 
 
 class WorkspaceSession(BaseModel):
@@ -37,11 +53,30 @@ class WorkspaceSession(BaseModel):
     permissions: list[str]
 
 
+class CopilotRequest(BaseModel):
+    message: str = Field(min_length=2, max_length=500)
+
+
+DEMO_REFERENCE_DATE = date(2026, 11, 1)
+
+
+def _configure_import_services(app: FastAPI) -> bool:
+    """Lazily activate preview only when the complete private scanner config exists."""
+    scanner = clamd_scanner_from_environment()
+    if scanner is None:
+        return False
+    engine = create_database_engine()
+    app.state.import_previewer = database_import_previewer(engine, scanner)
+    app.state.import_error_reporter = database_error_reporter(engine)
+    return True
+
+
 def create_app(
     auth_services: AuthServices | None = None,
     inventory_reader: InventoryReader | None = None,
     import_previewer: InventoryImportPreviewer | None = None,
     import_error_reporter: ImportErrorReporter | None = None,
+    copilot_reader: CopilotReader | None = None,
 ) -> FastAPI:
     app = FastAPI(
         title="BizPilot API",
@@ -54,6 +89,7 @@ def create_app(
     app.state.inventory_reader = inventory_reader
     app.state.import_previewer = import_previewer
     app.state.import_error_reporter = import_error_reporter
+    app.state.copilot_reader = copilot_reader
 
     @app.middleware("http")
     async def correlation_id(request: Request, call_next):
@@ -128,12 +164,18 @@ def create_app(
             )
         previewer = request.app.state.import_previewer
         if previewer is None:
-            deny_request(
-                request,
-                "inventory_import_configuration",
-                503,
-                "Import preview unavailable.",
-            )
+            try:
+                configured = _configure_import_services(request.app)
+            except (RuntimeError, ValueError):
+                configured = False
+            if not configured:
+                deny_request(
+                    request,
+                    "inventory_import_configuration",
+                    503,
+                    "Import preview unavailable.",
+                )
+            previewer = request.app.state.import_previewer
         try:
             content = await file.read(MAX_FILE_BYTES + 1)
         finally:
@@ -166,12 +208,18 @@ def create_app(
             )
         reporter = request.app.state.import_error_reporter
         if reporter is None:
-            deny_request(
-                request,
-                "inventory_import_configuration",
-                503,
-                "Import preview unavailable.",
-            )
+            try:
+                configured = _configure_import_services(request.app)
+            except (RuntimeError, ValueError):
+                configured = False
+            if not configured:
+                deny_request(
+                    request,
+                    "inventory_import_configuration",
+                    503,
+                    "Import preview unavailable.",
+                )
+            reporter = request.app.state.import_error_reporter
         try:
             body = reporter(authority, preview_id)
         except ImportRejected as error:
@@ -190,6 +238,49 @@ def create_app(
                 "Content-Disposition": 'attachment; filename="inventory-import-errors.csv"'
             },
         )
+
+    @app.post("/api/v1/copilot/query", response_model=CopilotAnswer)
+    def query_copilot(
+        payload: CopilotRequest,
+        request: Request,
+        authority: TenantAuthority = Depends(require_tenant_authority),
+    ) -> CopilotAnswer:
+        try:
+            require_permission(authority, Permission.COPILOT_USE)
+        except AuthorizationDenied:
+            deny_request(
+                request, "copilot_permission_denied", 403, "Permission denied."
+            )
+        reader = request.app.state.copilot_reader
+        if reader is None:
+            try:
+                engine = create_database_engine()
+                reader = build_copilot_reader(
+                    database_inventory_reader(engine),
+                    database_finance_reader(engine),
+                    database_inactive_customer_reader(engine),
+                    database_attention_task_reader(engine),
+                )
+            except RuntimeError:
+                deny_request(
+                    request, "copilot_configuration", 503, "Copilot unavailable."
+                )
+            request.app.state.copilot_reader = reader
+        try:
+            return reader(authority, payload.message, DEMO_REFERENCE_DATE)
+        except AuthorizationDenied:
+            deny_request(
+                request,
+                "copilot_domain_permission_denied",
+                403,
+                "Permission denied for this question.",
+            )
+        except UnsupportedQuestion as error:
+            deny_request(request, "copilot_question_unsupported", 422, str(error))
+        except (BusinessFactsUnavailable, InventoryUnavailable, ValueError):
+            deny_request(
+                request, "copilot_facts_unavailable", 503, "Source facts unavailable."
+            )
 
     return app
 

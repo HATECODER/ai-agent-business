@@ -7,6 +7,7 @@ import {
   hasPermission,
   inventoryStatus,
   inventorySummary,
+  latestInventoryObservation,
   merchantInventoryItem,
   type InventoryItem,
 } from "./inventory.ts";
@@ -32,6 +33,16 @@ test("status and summary remain deterministic", () => {
   assert.equal(inventoryStatus(items[1]), "low_stock");
   assert.equal(inventoryStatus(items[2]), "out_of_stock");
   assert.deepEqual(inventorySummary(items), { total: 3, lowStock: 1, outOfStock: 1 });
+});
+
+test("source freshness uses the latest valid observation", () => {
+  const items = [
+    { ...base, observed_at: "invalid" },
+    { ...base, sku: "OLDER", observed_at: "2026-10-31T18:00:00Z" },
+    { ...base, sku: "LATEST", observed_at: "2026-11-01T00:00:00Z" },
+  ];
+  assert.equal(latestInventoryObservation(items), "2026-11-01T00:00:00.000Z");
+  assert.equal(latestInventoryObservation([]), null);
 });
 
 test("merchant search uses business labels and low-stock filter", () => {

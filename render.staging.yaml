@@ -28,6 +28,8 @@ services:
         value: "3600"
       - key: BIZPILOT_OIDC_CLOCK_SKEW_SECONDS
         value: "30"
+      - key: BIZPILOT_IMPORT_PREVIEW_ENABLED
+        value: "false"
 
   - type: web
     name: bizpilot-hatecoder-staging-web
@@ -65,3 +67,5 @@ services:
         sync: false
       - key: BIZPILOT_SESSION_ENCRYPTION_KEY
         sync: false
+      - key: BIZPILOT_IMPORT_PREVIEW_ENABLED
+        value: "false"

@@ -1,0 +1,41 @@
+{
+  "inventory": {
+    "variants": 12,
+    "normal_stock": 5,
+    "low_stock_including_out_of_stock": 7,
+    "out_of_stock": 2,
+    "low_stock_skus": [
+      "BP-TS-BLK-M",
+      "BP-KUR-BLU-M",
+      "BP-KUR-BLU-L",
+      "BP-PAN-NVY-34",
+      "BP-SND-BRN-42",
+      "BP-BAG-TAN",
+      "BP-SCR-RED"
+    ],
+    "total_suggested_restock_units": 39
+  },
+  "finance_on_reference_date": {
+    "order_count": 2,
+    "revenue_bdt": 5000,
+    "order_cohort_receipts_bdt": 3500,
+    "order_cohort_receivable_bdt": 1500,
+    "average_order_value_bdt": 2500.0,
+    "dated_expenses_bdt": 800,
+    "receipts_less_dated_expenses_bdt": 2700
+  },
+  "customers": {
+    "inactive_cutoff_exclusive": "2026-10-02",
+    "inactive_count": 3,
+    "inactive_customer_keys": ["CUST-002", "CUST-004", "CUST-005"]
+  },
+  "tasks": {
+    "attention_count": 4,
+    "ordered_task_keys": ["TASK-001", "TASK-002", "TASK-003", "TASK-004"]
+  },
+  "preview_cases": {
+    "preview-valid.csv": {"new": 1, "changed": 1, "errors": 0, "conflicts": 0},
+    "preview-conflict.csv": {"new": 0, "changed": 0, "errors": 0, "conflicts": 1},
+    "preview-invalid.csv": {"new": 1, "changed": 0, "errors": 2, "conflicts": 0}
+  }
+}

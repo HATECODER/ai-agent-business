@@ -49,6 +49,14 @@ export function inventorySummary(items: InventoryItem[]): InventorySummary {
   );
 }
 
+export function latestInventoryObservation(items: InventoryItem[]): string | null {
+  const timestamps = items
+    .map((item) => new Date(item.observed_at).valueOf())
+    .filter((value) => Number.isFinite(value));
+  if (!timestamps.length) return null;
+  return new Date(Math.max(...timestamps)).toISOString();
+}
+
 export function filterInventory(
   items: InventoryItem[],
   query: string,

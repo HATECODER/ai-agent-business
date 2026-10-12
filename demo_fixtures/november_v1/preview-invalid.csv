@@ -1,0 +1,4 @@
+product_name,variant_name,sku,location_code,location_name,quantity,low_stock_threshold,variant_options,base_price_bdt,expected_record_version
+=FORMULA,Invalid Row,BP-BAD-001,DHAKA,Dhaka Main,2,1,,500.00,
+Duplicate Test,First,BP-DUP-001,DHAKA,Dhaka Main,2,1,,500.00,
+Duplicate Test,Second,BP-DUP-001,DHAKA,Dhaka Main,3,1,,500.00,

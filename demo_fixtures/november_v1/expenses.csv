@@ -1,0 +1,4 @@
+expense_key,expense_date,category,description,amount_bdt
+EXP-001,2026-11-01,delivery,Synthetic delivery expense,500
+EXP-002,2026-11-01,packaging,Synthetic packaging expense,300
+EXP-003,2026-10-31,supplies,Synthetic supplies expense,250

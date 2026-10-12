@@ -1,9 +1,8 @@
-from pathlib import Path
 import re
+from pathlib import Path
 
 from alembic import command
 from alembic.config import Config
-
 
 BACKEND_ROOT = Path(__file__).resolve().parents[1]
 
@@ -30,6 +29,10 @@ def test_initial_migration_renders_required_rls_contract(monkeypatch, capsys):
         "inventory_movements",
         "inventory_import_previews",
         "inventory_import_errors",
+        "customers",
+        "orders",
+        "expenses",
+        "tasks",
     ):
         assert f"CREATE TABLE {table}" in sql
     assert "CREATE ROLE" not in sql
@@ -70,6 +73,10 @@ def test_initial_migration_renders_required_rls_contract(monkeypatch, capsys):
         "GRANT SELECT, INSERT ON inventory_import_previews, "
         "inventory_import_errors TO bizpilot_runtime"
     ) in sql
+    for table in ("customers", "orders", "expenses", "tasks"):
+        assert f'ALTER TABLE "{table}" FORCE ROW LEVEL SECURITY' in sql
+        assert f"CREATE POLICY {table}_runtime_select" in sql
+    assert "GRANT SELECT ON customers, orders, expenses, tasks TO bizpilot_runtime" in sql
 
 
 def test_role_bootstrap_is_restricted_and_contains_no_credentials():

@@ -1,9 +1,10 @@
 from datetime import datetime, timezone
 from uuid import UUID
 
-from fastapi.testclient import TestClient
 import pytest
+from fastapi.testclient import TestClient
 
+import backend.app.main as main_module
 from backend.app.api_auth import AuthServices
 from backend.app.authorization import MerchantRole, TenantAuthority
 from backend.app.identity import VerifiedIdentity
@@ -13,10 +14,10 @@ from backend.app.inventory_import import (
     ImportRejected,
     InventoryImportPreview,
     database_import_previewer,
+    purge_expired_import_metadata,
     validate_inventory_csv,
 )
 from backend.app.main import create_app
-
 
 TENANT_ID = "10000000-0000-0000-0000-000000000001"
 PREVIEW_ID = UUID("10000000-0000-0000-0000-000000000099")
@@ -152,6 +153,38 @@ def test_preview_and_error_report_fail_closed_without_configured_services():
     assert response.status_code == 503
 
 
+def test_preview_runtime_wiring_requires_explicit_complete_environment(monkeypatch):
+    monkeypatch.setenv("BIZPILOT_IMPORT_PREVIEW_ENABLED", "true")
+    monkeypatch.setenv("BIZPILOT_CLAMAV_HOST", "clamav.internal")
+    previewer = RecordingPreviewer()
+    engine = object()
+    monkeypatch.setattr(main_module, "create_database_engine", lambda: engine)
+    monkeypatch.setattr(
+        main_module,
+        "database_import_previewer",
+        lambda configured_engine, _scanner: (
+            previewer if configured_engine is engine else None
+        ),
+    )
+    monkeypatch.setattr(
+        main_module,
+        "database_error_reporter",
+        lambda configured_engine: (
+            (lambda *_args: b"row_number,message\n")
+            if configured_engine is engine
+            else None
+        ),
+    )
+    files = {"file": ("inventory.csv", CSV_HEADER.encode(), "text/csv")}
+
+    response = api_client().post(
+        "/api/v1/inventory/imports/preview", headers=auth_headers(), files=files
+    )
+
+    assert response.status_code == 200
+    assert len(previewer.calls) == 1
+
+
 def test_error_report_uses_fixed_safe_download_name():
     response = api_client(
         reporter=lambda _authority, _preview: b"row_number,message\n"
@@ -167,3 +200,37 @@ def test_error_report_uses_fixed_safe_download_name():
     )
     assert denied.status_code == 403
     assert denied.content != b"private"
+
+
+def test_expired_preview_cleanup_uses_database_time_and_returns_count():
+    class Result:
+        rowcount = 3
+
+    class Connection:
+        def __init__(self):
+            self.statement = ""
+
+        def execute(self, statement):
+            self.statement = str(statement)
+            return Result()
+
+    class Transaction:
+        def __init__(self, connection):
+            self.connection = connection
+
+        def __enter__(self):
+            return self.connection
+
+        def __exit__(self, *_args):
+            return False
+
+    class Engine:
+        def __init__(self):
+            self.connection = Connection()
+
+        def begin(self):
+            return Transaction(self.connection)
+
+    engine = Engine()
+    assert purge_expired_import_metadata(engine) == 3
+    assert "expires_at <= CURRENT_TIMESTAMP" in engine.connection.statement

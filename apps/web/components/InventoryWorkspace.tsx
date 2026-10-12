@@ -8,6 +8,7 @@ import {
   hasPermission,
   inventoryStatus,
   inventorySummary,
+  latestInventoryObservation,
   type InventoryItem,
   type InventoryStatus,
 } from "@/lib/inventory";
@@ -20,6 +21,7 @@ interface InventoryWorkspaceProps {
   permissions: string[];
   items: InventoryItem[];
   connectionState: ConnectionState;
+  previewAvailable: boolean;
 }
 
 interface PreviewResult {
@@ -52,7 +54,7 @@ const connectionMessages: Record<ConnectionState, string> = {
   ready: "",
 };
 
-export function InventoryWorkspace({ workspaceName, roleLabel, permissions, items, connectionState }: InventoryWorkspaceProps) {
+export function InventoryWorkspace({ workspaceName, roleLabel, permissions, items, connectionState, previewAvailable }: InventoryWorkspaceProps) {
   const [query, setQuery] = useState("");
   const [lowStockOnly, setLowStockOnly] = useState(false);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
@@ -60,6 +62,7 @@ export function InventoryWorkspace({ workspaceName, roleLabel, permissions, item
   const [previewError, setPreviewError] = useState("");
   const [previewing, setPreviewing] = useState(false);
   const summary = useMemo(() => inventorySummary(items), [items]);
+  const latestObservation = useMemo(() => latestInventoryObservation(items), [items]);
   const visibleItems = useMemo(() => filterInventory(items, query, lowStockOnly), [items, query, lowStockOnly]);
   const connectionReady = connectionState === "ready";
   const canImport = hasPermission(permissions, "inventory.import");
@@ -97,7 +100,7 @@ export function InventoryWorkspace({ workspaceName, roleLabel, permissions, item
         <a className="brand" href="/inventory" aria-label="BizPilot home"><span className="brand-mark">B</span><span>BizPilot</span></a>
         <nav>
           <a className="nav-link active" href="/inventory" aria-current="page"><span aria-hidden="true">I</span> Inventory</a>
-          <span className="nav-link disabled"><span aria-hidden="true">T</span> Tasks</span>
+          <a className="nav-link" href="/copilot"><span aria-hidden="true">C</span> Copilot</a>
           <span className="nav-link disabled"><span aria-hidden="true">G</span> Growth</span>
           <span className="nav-link disabled"><span aria-hidden="true">F</span> Finance</span>
         </nav>
@@ -116,7 +119,7 @@ export function InventoryWorkspace({ workspaceName, roleLabel, permissions, item
 
         <section className="source-banner" aria-label="Inventory source information">
           <div><span className="source-dot" aria-hidden="true" /><strong>CSV snapshot</strong></div>
-          <p>Manual source · always check “Last updated” before making a stock decision.</p>
+          <p>{latestObservation ? `Manual source · observed ${formatObservedAt(latestObservation)}` : "Manual source · no observation time available"}</p>
         </section>
 
         <section className="metric-grid" aria-label="Inventory summary">
@@ -148,14 +151,15 @@ export function InventoryWorkspace({ workspaceName, roleLabel, permissions, item
 
         <section className="import-panel">
           <div><span className="eyebrow">Bulk update</span><h2>Import inventory from CSV</h2><p>Download the template, add up to 10,000 rows, then preview every change and error.</p></div>
+          {!previewAvailable && <div className="notice info" role="status"><strong>Live CSV preview is not enabled</strong><span>This student-funded demo keeps uploads disabled until private malware scanning is available. Offline classification tests are ready for review.</span></div>}
           <ol className="steps" aria-label="CSV import steps">
             <li><span>1</span><strong>Prepare</strong><small>UTF-8 CSV · 5 MB maximum</small></li>
             <li><span>2</span><strong>Preview</strong><small>New, changed, conflict, and error rows</small></li>
             <li><span>3</span><strong>Review</strong><small>No stock is changed in this phase</small></li>
           </ol>
           <form className="import-form" onSubmit={submitPreview}>
-            <label className="file-field"><span>CSV file</span><input type="file" name="file" accept=".csv,text/csv,application/csv" disabled={!canImport || !connectionReady || previewing} onChange={(event) => { setSelectedFile(event.target.files?.[0] ?? null); setPreview(null); setPreviewError(""); }} /></label>
-            <button className="primary-button" type="submit" disabled={!selectedFile || !canImport || !connectionReady || previewing}>{!connectionReady ? "Sign in to preview" : !canImport ? "Preview not allowed for your role" : previewing ? "Checking CSV…" : "Preview CSV"}</button>
+            <label className="file-field"><span>CSV file</span><input type="file" name="file" accept=".csv,text/csv,application/csv" disabled={!previewAvailable || !canImport || !connectionReady || previewing} onChange={(event) => { setSelectedFile(event.target.files?.[0] ?? null); setPreview(null); setPreviewError(""); }} /></label>
+            <button className="primary-button" type="submit" disabled={!previewAvailable || !selectedFile || !canImport || !connectionReady || previewing}>{!previewAvailable ? "Preview unavailable" : !connectionReady ? "Sign in to preview" : !canImport ? "Preview not allowed for your role" : previewing ? "Checking CSV…" : "Preview CSV"}</button>
           </form>
           {previewError && <div className="notice error" role="alert"><strong>Preview failed</strong><span>{previewError}</span></div>}
           {preview && <section className="preview-summary" aria-live="polite">

@@ -11,6 +11,27 @@ export interface WorkspaceSession {
   permissions: string[];
 }
 
+export interface CopilotAnswer {
+  question_type: "restock" | "restock_proposal" | "finance" | "inactive_customers" | "tasks";
+  answer: string;
+  sources: { label: string; value: string }[];
+  reference_date: string;
+  language: "English" | "Bangla" | "Banglish";
+  mode: "deterministic";
+  limitations: string[];
+  proposal_items: {
+    sku: string;
+    product: string;
+    variant: string;
+    location: string;
+    current_quantity: number;
+    low_stock_threshold: number;
+    suggested_quantity: number;
+    source: string;
+    observed_at: string;
+  }[];
+}
+
 interface ApiInventoryItem extends InventoryItem {
   inventory_id: string;
   product_id: string;
@@ -130,5 +151,23 @@ export async function forwardInventoryPreview(file: File): Promise<Response> {
     });
   } catch {
     return Response.json({ detail: "Import preview unavailable." }, { status: 503 });
+  }
+}
+
+export async function forwardCopilotQuery(message: string): Promise<Response> {
+  const config = readBffConfig();
+  const auth0 = getAuth0Client();
+  if (!auth0 || !(await auth0.getSession())) return Response.json({ detail: "Authentication required." }, { status: 401 });
+  try {
+    const { token } = await auth0.getAccessToken();
+    const upstream = await apiFetch("/api/v1/copilot/query", token, config.workspaceId, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ message }),
+    });
+    const payload = await upstream.arrayBuffer();
+    return new Response(payload, { status: upstream.status, headers: { "Content-Type": "application/json", "Cache-Control": "no-store" } });
+  } catch {
+    return Response.json({ detail: "Copilot unavailable." }, { status: 503 });
   }
 }

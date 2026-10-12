@@ -32,8 +32,26 @@ Current implemented boundary:
   metadata, and formula-safe error CSVs;
 - a mandatory injected malware-scanner boundary. Without a reviewed scanner,
   preview fails closed with `503`; raw CSV bytes are never persisted.
+- a reusable ClamAV `INSTREAM` adapter with bounded responses and sanitized,
+  fail-closed errors. It is intentionally dormant while paid scanner hosting is
+  deferred; adding the adapter does not enable CSV preview by itself.
 - workspace capability discovery returns the active role's permission names for
   the separate merchant UI; it never replaces endpoint authorization.
+- tenant-isolated customer, order, expense and task fact tables with forced RLS
+  and read-only runtime grants;
+- deterministic finance, inactive-customer and attention-task readers that
+  enforce domain permissions before querying and return no internal database IDs.
+- a bounded `POST /api/v1/copilot/query` endpoint that classifies the supported
+  English, Bangla and Banglish question families, enforces Copilot plus domain
+  permissions, and renders answers only from deterministic tenant facts. The
+  staging path does not reuse the SQLite prototype or silently call a model.
+- a review-only restock proposal response using the approved deterministic
+  formula `max(0, 2 * low_stock_threshold - current_quantity)`, with source,
+  observation time and quantities for each line. No purchase or inventory write
+  endpoint is introduced.
+- deterministic English, Bangla and Banglish answer templates selected from the
+  request language. The versioned 15-case evaluation covers all five supported
+  question families in each language without sending data to a model provider.
 
 Run locally after installing the root locked requirements:
 
